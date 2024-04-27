@@ -1,0 +1,6 @@
+@vgt_saga_order_HostAddress = http://localhost:5287
+
+GET {{vgt_saga_order_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

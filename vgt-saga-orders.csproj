@@ -1,7 +1,6 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
     <PropertyGroup>
-        <OutputType>Exe</OutputType>
         <TargetFramework>net8.0</TargetFramework>
         <RootNamespace>vgt_saga_orders</RootNamespace>
         <ImplicitUsings>enable</ImplicitUsings>
@@ -10,6 +9,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.4"/>
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0"/>
         <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0"/>
         <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0"/>
         <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.0"/>
@@ -19,6 +20,18 @@
         <None Update="appsettings.json">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
+        <Content Include="..\.dockerignore">
+            <Link>.dockerignore</Link>
+        </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+        <_ContentIncludedByDefault Remove="vgt-saga-order\appsettings.Development.json"/>
+        <_ContentIncludedByDefault Remove="vgt-saga-order\appsettings.json"/>
+        <_ContentIncludedByDefault Remove="vgt-saga-order\obj\project.assets.json"/>
+        <_ContentIncludedByDefault Remove="vgt-saga-order\obj\project.packagespec.json"/>
+        <_ContentIncludedByDefault Remove="vgt-saga-order\obj\vgt-saga-order.csproj.nuget.dgspec.json"/>
+        <_ContentIncludedByDefault Remove="vgt-saga-order\Properties\launchSettings.json"/>
     </ItemGroup>
 
 </Project>
