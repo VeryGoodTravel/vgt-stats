@@ -6,10 +6,13 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <DocumentationFile>../../../SagaOrdersDocumentation.xml</DocumentationFile>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.4"/>
+        <PackageReference Include="RabbitMQ.Client" Version="6.8.1"/>
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0"/>
         <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0"/>
         <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0"/>
@@ -32,6 +35,11 @@
         <_ContentIncludedByDefault Remove="vgt-saga-order\obj\project.packagespec.json"/>
         <_ContentIncludedByDefault Remove="vgt-saga-order\obj\vgt-saga-order.csproj.nuget.dgspec.json"/>
         <_ContentIncludedByDefault Remove="vgt-saga-order\Properties\launchSettings.json"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Folder Include="BrokerHandling\"/>
+        <Folder Include="Orchestrator\CQRS\"/>
     </ItemGroup>
 
 </Project>
