@@ -1,5 +1,6 @@
 using NLog;
 using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
 
 namespace vgt_saga_orders.Orchestrator;
@@ -28,7 +29,7 @@ namespace vgt_saga_orders.Orchestrator;
 /// </list>
 /// </p>
 /// </summary>
-public class RabbitMq : IDisposable
+public class RepliesQueueHandler : IDisposable
 {
     private const string LoggerPrefix = "RabbitMQ| ";
     private readonly ConnectionFactory _factory;
@@ -42,6 +43,9 @@ public class RabbitMq : IDisposable
     private readonly IModel _sagaHotel;
     private readonly IModel _sagaFlight;
 
+    // replies consumer
+    private EventingBasicConsumer _consumer;
+
     /// <summary>
     /// Constructor of the RabbitMQ handling class.
     /// Initializes RabbitMQ handling object.
@@ -52,7 +56,7 @@ public class RabbitMq : IDisposable
     /// <param name="log"> logger to log to </param>
     /// <exception cref="ArgumentException"> Which variable is missing in the configuration </exception>
     /// <exception cref="BrokerUnreachableException"> Couldn't establish connection </exception>
-    public RabbitMq(IConfiguration config, Logger log)
+    public RepliesQueueHandler(IConfiguration config, Logger log)
     {
         _logger = log;
         _logger.Debug("{p}Initializing RabbitMq connections", LoggerPrefix);
@@ -87,7 +91,31 @@ public class RabbitMq : IDisposable
         _sagaFlight = _connection.CreateModel();
         _sagaFlight.QueueDeclare(queues[4]);
 
-        _logger.Debug("{p}Initializing RabbitMq connections", LoggerPrefix);
+        _logger.Debug("{p}Initialized RabbitMq queues", LoggerPrefix);
+        _logger.Info("{p}Initialized RabbitMq", LoggerPrefix);
+    }
+
+    /// <summary>
+    /// Handles RabbitMQ message tag and posts the acceptance or rejection,
+    /// </summary>
+    /// <param name="ea"> tag to answer </param>
+    /// <param name="state"> ack/reject </param>
+    public void PublishTagResponse(BasicDeliverEventArgs ea, bool state)
+    {
+        if (state) _sagaReplies.BasicAck(ea.DeliveryTag, false);
+        else _sagaReplies.BasicReject(ea.DeliveryTag, false);
+    }
+
+    /// <summary>
+    /// Create queue consumer and hook to the event specifying incoming replies.
+    /// </summary>
+    /// <param name="handler"> handler to assign to the consumer event </param>
+    public void AddRepliesConsumer(EventHandler<BasicDeliverEventArgs> handler)
+    {
+        _consumer = new EventingBasicConsumer(_sagaReplies);
+        _logger.Debug("{p}Added Replies consumer", LoggerPrefix);
+        _consumer.Received += handler;
+        _logger.Debug("{p}Added Replies event handler", LoggerPrefix);
     }
 
     /// <summary>

@@ -1,5 +1,6 @@
 using NLog;
 using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
 
 namespace vgt_saga_orders.Orchestrator;
@@ -35,6 +36,9 @@ public class OrderQueueHandler : IDisposable
     // channels of the queues
     private readonly IModel _sagaReplies;
     private readonly IModel _sagaOrder;
+
+    // replies consumer
+    private EventingBasicConsumer _consumer;
 
     /// <summary>
     /// Constructor of the RabbitMQ handling class.
@@ -72,7 +76,31 @@ public class OrderQueueHandler : IDisposable
         _sagaOrder = _connection.CreateModel();
         _sagaOrder.QueueDeclare(queues[1]);
 
-        _logger.Debug("{p}Initializing RabbitMq connections", LoggerPrefix);
+        _logger.Debug("{p}Initialized RabbitMq queues", LoggerPrefix);
+        _logger.Info("{p}Initialized RabbitMq", LoggerPrefix);
+    }
+
+    /// <summary>
+    /// Handles RabbitMQ message tag and posts the acceptance or rejection,
+    /// </summary>
+    /// <param name="ea"> tag to answer </param>
+    /// <param name="state"> ack/reject </param>
+    public void PublishTagResponse(BasicDeliverEventArgs ea, bool state)
+    {
+        if (state) _sagaOrder.BasicAck(ea.DeliveryTag, false);
+        else _sagaOrder.BasicReject(ea.DeliveryTag, false);
+    }
+
+    /// <summary>
+    /// Create queue consumer and hook to the event specifying incoming requests.
+    /// </summary>
+    /// <param name="handler"> handler to assign to the consumer event </param>
+    public void AddRepliesConsumer(EventHandler<BasicDeliverEventArgs> handler)
+    {
+        _consumer = new EventingBasicConsumer(_sagaOrder);
+        _logger.Debug("{p}Added Replies consumer", LoggerPrefix);
+        _consumer.Received += handler;
+        _logger.Debug("{p}Added Replies event handler", LoggerPrefix);
     }
 
     /// <summary>

@@ -1,6 +1,8 @@
+using System.Threading.Channels;
 using NLog;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
+using vgt_saga_serialization;
 
 namespace vgt_saga_orders.Orchestrator;
 
@@ -10,9 +12,18 @@ namespace vgt_saga_orders.Orchestrator;
 /// </summary>
 public class Orchestrator : IDisposable
 {
-    private readonly RabbitMq _rabbit;
+    private readonly RepliesQueueHandler _queues;
     private readonly Logger _logger;
     private readonly IConfiguration _config;
+    private readonly Utils _jsonUtils;
+
+    private readonly List<MessageType> _keys =
+    [
+        MessageType.OrderReply, MessageType.PaymentReply, MessageType.HotelReply, MessageType.FlightReply,
+        MessageType.OrderRequest, MessageType.PaymentRequest, MessageType.HotelRequest, MessageType.FlightRequest
+    ];
+
+    private readonly Dictionary<MessageType, Channel<Message>> _repliesChannels = [];
 
     /// <summary>
     /// Constructor of the Orchestrator class.
@@ -28,18 +39,61 @@ public class Orchestrator : IDisposable
     {
         _logger = LogManager.GetCurrentClassLogger();
         _config = config;
-        _rabbit = new RabbitMq(_config, _logger);
+
+        _jsonUtils = new Utils(_logger);
+        CreateChannels();
+        // TODO: Add tasks for each service
+
+        _queues = new RepliesQueueHandler(_config, _logger);
+        // TODO: Probably add consumer later after all inits
+        _queues.AddRepliesConsumer(SagaRepliesEventHandler);
     }
 
-    public void SagaRepliesEventHandler(object? sender, BasicDeliverEventArgs ea)
+    /// <summary>
+    /// Event Handler that hooks to the event of the queue consumer.
+    /// Handles incoming replies from the RabbitMQ and routes them to the appropriate tasks.
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="ea"></param>
+    private void SagaRepliesEventHandler(object? sender, BasicDeliverEventArgs ea)
     {
         _logger.Debug("Received response | Tag: {tag}", ea.DeliveryTag);
         var body = ea.Body.ToArray();
+
+        var reply = _jsonUtils.Deserialize(body);
+
+        if (reply == null) return;
+
+        var message = reply.Value;
+
+        // send message reply to the appropriate task
+        var result = _repliesChannels[message.MessageType].Writer.TryWrite(message);
+        if (result) _logger.Debug("Replied routed successfuly to {type} handler", message.MessageType.ToString());
+        else _logger.Warn("Something went wrong in routing to {type} handler", message.MessageType.ToString());
+
+        _queues.PublishTagResponse(ea, result);
+    }
+
+    /// <summary>
+    /// Creates async channels to send received messages with to the tasks handling them.
+    /// Channels are stored in the dictionary MessageType - Channel
+    /// </summary>
+    private void CreateChannels()
+    {
+        _logger.Debug("Creating tasks message channels");
+        foreach (var key in _keys)
+        {
+            _repliesChannels[key] = Channel.CreateUnbounded<Message>(new UnboundedChannelOptions()
+                { SingleReader = true, SingleWriter = true, AllowSynchronousContinuations = true });
+        }
+
+        _logger.Debug("Tasks message channels created");
     }
 
     /// <inheritdoc/>
     public void Dispose()
     {
-        _rabbit.Dispose();
+        _logger.Debug("Disposing");
+        _queues.Dispose();
     }
 }
