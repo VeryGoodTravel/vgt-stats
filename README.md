@@ -10,8 +10,8 @@ Contains both orders microservice and orchestrator
 - RABBIT_HOST -> Address of the rabbit server.
 - RABBIT_VIRT_HOST -> Virtual host of the rabbit server.
 - RABBIT_PORT -> Port of the rabbit server.
-- RABBIT_USR -> Username to login with.
-- RABBIT_PASSWORD -> User password to login with.
+- RABBIT_USR -> Username to log in with.
+- RABBIT_PASSWORD -> User password to log in with.
 - RABBIT_REPLIES -> Queue of the replies sent back to the orchestrator.
 - RABBIT_ORDER -> Queue of the requests sent by the orchestrator to the order service.
 - RABBIT_PAYMENT -> Queue of the requests sent by the orchestrator to the payment gate service.

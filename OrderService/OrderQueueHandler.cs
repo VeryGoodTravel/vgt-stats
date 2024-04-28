@@ -22,15 +22,12 @@ namespace vgt_saga_orders.Orchestrator;
 ///     <listheader><term>Queue names:</term></listheader>
 ///     <item><term>RABBIT_REPLIES</term> <description> - Queue of the replies sent back to the orchestrator.</description></item>
 ///     <item><term>RABBIT_ORDER</term> <description> - Queue of the requests sent by the orchestrator to the order service.</description></item>
-///     <item><term>RABBIT_PAYMENT</term> <description> - Queue of the requests sent by the orchestrator to the payment gate service.</description></item>
-///     <item><term>RABBIT_HOTEL</term> <description> - Queue of the requests sent by the orchestrator to the hotel service.</description></item>
-///     <item><term>RABBIT_FLIGHT</term> <description> - Queue of the requests sent by the orchestrator to the flight service.</description></item>
 /// </list>
 /// </p>
 /// </summary>
-public class RabbitMq : IDisposable
+public class OrderQueueHandler : IDisposable
 {
-    private const string LoggerPrefix = "RabbitMQ| ";
+    private const string LoggerPrefix = "OrderQueue| ";
     private readonly ConnectionFactory _factory;
     private readonly IConnection _connection;
     private readonly Logger _logger;
@@ -38,9 +35,6 @@ public class RabbitMq : IDisposable
     // channels of the queues
     private readonly IModel _sagaReplies;
     private readonly IModel _sagaOrder;
-    private readonly IModel _sagaPayment;
-    private readonly IModel _sagaHotel;
-    private readonly IModel _sagaFlight;
 
     /// <summary>
     /// Constructor of the RabbitMQ handling class.
@@ -52,7 +46,7 @@ public class RabbitMq : IDisposable
     /// <param name="log"> logger to log to </param>
     /// <exception cref="ArgumentException"> Which variable is missing in the configuration </exception>
     /// <exception cref="BrokerUnreachableException"> Couldn't establish connection </exception>
-    public RabbitMq(IConfiguration config, Logger log)
+    public OrderQueueHandler(IConfiguration config, Logger log)
     {
         _logger = log;
         _logger.Debug("{p}Initializing RabbitMq connections", LoggerPrefix);
@@ -78,15 +72,6 @@ public class RabbitMq : IDisposable
         _sagaOrder = _connection.CreateModel();
         _sagaOrder.QueueDeclare(queues[1]);
 
-        _sagaPayment = _connection.CreateModel();
-        _sagaPayment.QueueDeclare(queues[2]);
-
-        _sagaHotel = _connection.CreateModel();
-        _sagaHotel.QueueDeclare(queues[3]);
-
-        _sagaFlight = _connection.CreateModel();
-        _sagaFlight.QueueDeclare(queues[4]);
-
         _logger.Debug("{p}Initializing RabbitMq connections", LoggerPrefix);
     }
 
@@ -108,15 +93,6 @@ public class RabbitMq : IDisposable
             string.IsNullOrEmpty(config.GetValue<string?>("RABBIT_ORDER"))
                 ? ThrowException<string>("RABBIT_ORDER")
                 : config.GetValue<string?>("RABBIT_ORDER")!,
-            string.IsNullOrEmpty(config.GetValue<string?>("RABBIT_PAYMENT"))
-                ? ThrowException<string>("RABBIT_PAYMENT")
-                : config.GetValue<string?>("RABBIT_PAYMENT")!,
-            string.IsNullOrEmpty(config.GetValue<string?>("RABBIT_HOTEL"))
-                ? ThrowException<string>("RABBIT_HOTEL")
-                : config.GetValue<string?>("RABBIT_PAYMENT")!,
-            string.IsNullOrEmpty(config.GetValue<string?>("RABBIT_FLIGHT"))
-                ? ThrowException<string>("RABBIT_FLIGHT")
-                : config.GetValue<string?>("RABBIT_PAYMENT")!
         };
 
         return result;
@@ -176,15 +152,9 @@ public class RabbitMq : IDisposable
     {
         _sagaReplies.Close();
         _sagaOrder.Close();
-        _sagaPayment.Close();
-        _sagaHotel.Close();
-        _sagaFlight.Close();
 
         _sagaReplies.Dispose();
         _sagaOrder.Dispose();
-        _sagaPayment.Dispose();
-        _sagaHotel.Dispose();
-        _sagaFlight.Dispose();
 
         _connection.Close();
         _connection.Dispose();

@@ -1,4 +1,5 @@
 using NLog;
+using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
 
 namespace vgt_saga_orders.Orchestrator;
@@ -28,6 +29,12 @@ public class Orchestrator : IDisposable
         _logger = LogManager.GetCurrentClassLogger();
         _config = config;
         _rabbit = new RabbitMq(_config, _logger);
+    }
+
+    public void SagaRepliesEventHandler(object? sender, BasicDeliverEventArgs ea)
+    {
+        _logger.Debug("Received response | Tag: {tag}", ea.DeliveryTag);
+        var body = ea.Body.ToArray();
     }
 
     /// <inheritdoc/>

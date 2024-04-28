@@ -134,6 +134,118 @@
         <member name="M:vgt_saga_orders.Orchestrator.RabbitMq.Dispose">
             <inheritdoc/>
         </member>
+        <member name="T:vgt_saga_orders.Orchestrator.OrderQueueHandler">
+            <summary>
+                Class handling RabbitMQ connections, messages and events;
+                all concerning SAGA transactions with an orchestrator.
+                Configuration data needed for this class is as follows.
+                <p>
+                    <list type="bullet">
+                        <listheader>
+                            <term>Rabbit connection:</term>
+                        </listheader>
+                        <item>
+                            <term>RABBIT_HOST</term>
+                            <description>- Address of the rabbit server.</description>
+                        </item>
+                        <item>
+                            <term>RABBIT_VIRT_HOST</term>
+                            <description>- Virtual host of the rabbit server.</description>
+                        </item>
+                        <item>
+                            <term>RABBIT_PORT</term>
+                            <description>- Port of the rabbit server.</description>
+                        </item>
+                        <item>
+                            <term>RABBIT_USR</term>
+                            <description>- Username to login with.</description>
+                        </item>
+                        <item>
+                            <term>RABBIT_PASSWORD</term>
+                            <description>- User password to login with.</description>
+                        </item>
+                    </list>
+                    and
+                    <list type="bullet">
+                        <listheader>
+                            <term>Queue names:</term>
+                        </listheader>
+                        <item>
+                            <term>RABBIT_REPLIES</term>
+                            <description>- Queue of the replies sent back to the orchestrator.</description>
+                        </item>
+                        <item>
+                            <term>RABBIT_ORDER</term>
+                            <description>- Queue of the requests sent by the orchestrator to the order service.
+                            </description>
+                        </item>
+                    </list>
+                </p>
+            </summary>
+        </member>
+        <member name="M:vgt_saga_orders.Orchestrator.OrderQueueHandler.#ctor(Microsoft.Extensions.Configuration.IConfiguration,NLog.Logger)">
+            <summary>
+                Constructor of the RabbitMQ handling class.
+                Initializes RabbitMQ handling object.
+                Creates connection string/factory based on configuration data present
+                with exceptions thrown if the data is nowhere to be found.
+            </summary>
+            <param name="config">Configuration with the connection params</param>
+            <param name="log">logger to log to</param>
+            <exception cref="T:System.ArgumentException">Which variable is missing in the configuration</exception>
+            <exception cref="T:RabbitMQ.Client.Exceptions.BrokerUnreachableException">Couldn't establish connection
+            </exception>
+        </member>
+        <member name="M:vgt_saga_orders.Orchestrator.OrderQueueHandler.GetQueuesFromConfig(Microsoft.Extensions.Configuration.IConfiguration)">
+            <summary>
+                Get the list of all saga queues defined in the configuration.
+                Logs, Creates and Throws ArgumentError if a queue name is not present.
+            </summary>
+            <param name="config">Configuration to take the values from</param>
+            <returns>List of queue names</returns>
+            <exception cref="T:System.ArgumentException">Which variable is missing</exception>
+        </member>
+        <member name="M:vgt_saga_orders.Orchestrator.OrderQueueHandler.GetConnectionFactoryFromConfig(Microsoft.Extensions.Configuration.IConfiguration)">
+            <summary>
+                Creates connection factory to the RabbitMQ
+                based on the data specified in the configuration file or env variables
+            </summary>
+            <param name="config">Configuration to use</param>
+            <returns>ConnectionFactory with specified connection params</returns>
+            <exception cref="T:System.ArgumentException">Which variable is missing</exception>
+        </member>
+        <member name="M:vgt_saga_orders.Orchestrator.OrderQueueHandler.ThrowException``1(System.String)">
+            <summary>
+                Logs, creates and throws the exception that the specified variable is not present in the config
+            </summary>
+            <param name="argument">Variable not present</param>
+            <typeparam name="T">type to "return"</typeparam>
+            <returns></returns>
+            <exception cref="T:System.ArgumentException">Which variable is missing</exception>
+        </member>
+        <member name="M:vgt_saga_orders.Orchestrator.OrderQueueHandler.Dispose">
+            <inheritdoc/>
+        </member>
+        <member name="T:vgt_saga_orders.OrderService.OrderService">
+            <summary>
+                Saga Orchestrator;
+                handles all saga transactions of user orders.
+            </summary>
+        </member>
+        <member name="M:vgt_saga_orders.OrderService.OrderService.#ctor(Microsoft.Extensions.Configuration.IConfiguration)">
+            <summary>
+                Constructor of the OrderService class.
+                Initializes OrderService object.
+                Creates, initializes and opens connections to the database and rabbitmq
+                based on configuration data present and handled by specified handling objects.
+                Throws propagated exceptions if the configuration data is nowhere to be found.
+            </summary>
+            <param name="config">Configuration with the connection params</param>
+            <exception cref="T:System.ArgumentException">Which variable is missing in the configuration</exception>
+            <exception cref="T:RabbitMQ.Client.Exceptions.BrokerUnreachableException">Couldn't establish connection with
+                RabbitMQ
+            </exception>
+        </member>
         <member name="M:vgt_saga_orders.OrderService.OrderService.Dispose">
             <inheritdoc/>
         </member>
