@@ -3,6 +3,7 @@ using NLog.Extensions.Logging;
 using RabbitMQ.Client.Exceptions;
 using vgt_saga_orders.Orchestrator;
 using vgt_saga_orders.OrderService;
+using ILogger = NLog.ILogger;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -57,10 +58,6 @@ app.UseHttpsRedirection();
 Orchestrator? orchestrator = null;
 OrderService? orderService = null;
 
-AppDomain.CurrentDomain.ProcessExit += CurrentDomainProcessExit;
-AppDomain.CurrentDomain.DomainUnload += CurrentDomainProcessExit;
-AppDomain.CurrentDomain.UnhandledException += CurrentDomainProcessExit;
-
 try
 {
     orchestrator = new Orchestrator(app.Configuration);
@@ -68,11 +65,11 @@ try
 }
 catch (BrokerUnreachableException)
 {
-    CurrentDomainProcessExit(null, EventArgs.Empty);
+    GracefulExit(app, logger, [orchestrator, orderService]);
 }
 catch (ArgumentException)
 {
-    CurrentDomainProcessExit(null, EventArgs.Empty);
+    GracefulExit(app, logger, [orchestrator, orderService]);
 }
 
 var summaries = new[]
@@ -99,22 +96,36 @@ app.Run();
 
 return;
 
-void CurrentDomainProcessExit(object? sender, EventArgs e)
+// dispose objects and close connections
+void GracefulExit(WebApplication wA, ILogger log, List<IDisposable?> toDispose)
 {
-    orchestrator?.Dispose();
-    orderService?.Dispose();
-    AwaitAppStop().Wait();
+    foreach (var obj in toDispose)
+    {
+        obj?.Dispose();
+    }
+
+    try
+    {
+        wA.Lifetime.StopApplication();
+        AwaitAppStop(wA).Wait();
+    }
+    catch (ObjectDisposedException)
+    {
+        log.Info("App already disposed off");
+    }
+
+    LogManager.Shutdown();
     Environment.Exit(0);
+    throw new Exception("Kill the rest of the app");
 }
 
-// TODO: verify
-async Task AwaitAppStop()
+async Task AwaitAppStop(WebApplication wA)
 {
-    //await app.StopAsync();
-    //await app.DisposeAsync();
+    await wA.StopAsync();
+    await wA.DisposeAsync();
 }
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }

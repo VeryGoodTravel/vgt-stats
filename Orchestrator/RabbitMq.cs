@@ -58,7 +58,7 @@ public class RabbitMq : IDisposable
         _logger.Debug("{p}Initializing RabbitMq connections", LoggerPrefix);
         try
         {
-            _factory = new ConnectionFactory() { HostName = "localhost" };
+            _factory = GetConnectionFactoryFromConfig(config);
             _connection = _factory.CreateConnection();
         }
         catch (BrokerUnreachableException e)
@@ -99,14 +99,24 @@ public class RabbitMq : IDisposable
     /// <exception cref="ArgumentException"> Which variable is missing </exception>
     private List<string> GetQueuesFromConfig(IConfiguration config)
     {
-        // TODO: verify envs not present
+        _logger.Error(config.GetValue<string?>("RABBIT_REPLIES"));
         var result = new List<string>
         {
-            config.GetValue<string?>("RABBIT_REPLIES") ?? ThrowException<string>("RABBIT_REPLIES"),
-            config.GetValue<string?>("RABBIT_ORDER") ?? ThrowException<string>("RABBIT_ORDER"),
-            config.GetValue<string?>("RABBIT_PAYMENT") ?? ThrowException<string>("RABBIT_PAYMENT"),
-            config.GetValue<string?>("RABBIT_HOTEL") ?? ThrowException<string>("RABBIT_HOTEL"),
-            config.GetValue<string?>("RABBIT_FLIGHT") ?? ThrowException<string>("RABBIT_FLIGHT")
+            string.IsNullOrEmpty(config.GetValue<string?>("RABBIT_REPLIES"))
+                ? ThrowException<string>("RABBIT_REPLIES")
+                : config.GetValue<string?>("RABBIT_REPLIES")!,
+            string.IsNullOrEmpty(config.GetValue<string?>("RABBIT_ORDER"))
+                ? ThrowException<string>("RABBIT_ORDER")
+                : config.GetValue<string?>("RABBIT_ORDER")!,
+            string.IsNullOrEmpty(config.GetValue<string?>("RABBIT_PAYMENT"))
+                ? ThrowException<string>("RABBIT_PAYMENT")
+                : config.GetValue<string?>("RABBIT_PAYMENT")!,
+            string.IsNullOrEmpty(config.GetValue<string?>("RABBIT_HOTEL"))
+                ? ThrowException<string>("RABBIT_HOTEL")
+                : config.GetValue<string?>("RABBIT_PAYMENT")!,
+            string.IsNullOrEmpty(config.GetValue<string?>("RABBIT_FLIGHT"))
+                ? ThrowException<string>("RABBIT_FLIGHT")
+                : config.GetValue<string?>("RABBIT_PAYMENT")!
         };
 
         return result;
@@ -121,16 +131,24 @@ public class RabbitMq : IDisposable
     /// <exception cref="ArgumentException"> Which variable is missing </exception>
     private ConnectionFactory GetConnectionFactoryFromConfig(IConfiguration config)
     {
-        var host = config.GetValue<string>("RABBIT_HOST") ?? ThrowException<string>("RABBIT_HOST");
-        var virtHost = config.GetValue<string>("RABBIT_VIRT_HOST") ?? ThrowException<string>("RABBIT_VIRT_HOST");
+        var host = string.IsNullOrEmpty(config.GetValue<string>("RABBIT_HOST"))
+            ? ThrowException<string>("RABBIT_HOST")
+            : config.GetValue<string>("RABBIT_HOST")!;
+        var virtHost = string.IsNullOrEmpty(config.GetValue<string>("RABBIT_VIRT_HOST"))
+            ? ThrowException<string>("RABBIT_VIRT_HOST")
+            : config.GetValue<string>("RABBIT_VIRT_HOST")!;
         var port = config.GetValue<int?>("RABBIT_PORT") ?? ThrowException<int>("RABBIT_PORT");
-        var usr = config.GetValue<string>("RABBIT_USR") ?? ThrowException<string>("RABBIT_USR");
-        var pass = config.GetValue<string>("RABBIT_PASSWORD") ?? ThrowException<string>("RABBIT_PASSWORD");
+        var usr = string.IsNullOrEmpty(config.GetValue<string>("RABBIT_USR"))
+            ? ThrowException<string>("RABBIT_USR")
+            : config.GetValue<string>("RABBIT_USR")!;
+        var pass = string.IsNullOrEmpty(config.GetValue<string>("RABBIT_PASSWORD"))
+            ? ThrowException<string>("RABBIT_PASSWORD")
+            : config.GetValue<string>("RABBIT_PASSWORD")!;
 
         return new ConnectionFactory
         {
             HostName = host,
-            Port = port,
+            // Port = port,
             UserName = usr,
             Password = pass,
             VirtualHost = virtHost,
