@@ -3,6 +3,11 @@
 Main repository of the saga process.
 Contains both orders microservice and orchestrator
 
+## Repository
+
+This repository contains additional submodules containing shared libraries of the SAGA microservices implementations.
+To update those submodules in the local branch run `git submodule update --remote --merge`
+
 ## Configuration
 
 ### Environmental variables
