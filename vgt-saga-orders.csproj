@@ -7,7 +7,7 @@
         <Nullable>enable</Nullable>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <DocumentationFile>../../../SagaOrdersDocumentation.xml</DocumentationFile>
+        <DocumentationFile>SagaOrdersDocumentation.xml</DocumentationFile>
     </PropertyGroup>
 
     <ItemGroup>
