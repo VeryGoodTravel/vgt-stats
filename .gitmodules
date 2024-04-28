@@ -1,0 +1,3 @@
+[submodule "vgt-saga-serialization"]
+	path = vgt-saga-serialization
+	url = https://github.com/VeryGoodTravel/vgt-saga-serialization
