@@ -20,6 +20,7 @@ public class OrderService : IDisposable
 
     private readonly List<MessageType> _keys = [MessageType.OrderReply, MessageType.OrderRequest];
     private readonly Dictionary<MessageType, Channel<Message>> _repliesChannels = [];
+    private readonly OrderHandler _orderHandler;
 
     /// <summary>
     /// Constructor of the OrderService class.
@@ -38,6 +39,8 @@ public class OrderService : IDisposable
 
         _jsonUtils = new Utils(_logger);
         CreateChannels();
+        _orderHandler = new OrderHandler(_repliesChannels[MessageType.OrderRequest], _repliesChannels[MessageType.OrderReply], _logger);
+        
         // TODO: Add tasks for each service
 
         _queues = new OrderQueueHandler(_config, _logger);
@@ -64,6 +67,7 @@ public class OrderService : IDisposable
 
         // send message reply to the appropriate task
         var result = _repliesChannels[message.MessageType].Writer.TryWrite(message);
+        
         if (result) _logger.Debug("Replied routed successfuly to {type} handler", message.MessageType.ToString());
         else _logger.Warn("Something went wrong in routing to {type} handler", message.MessageType.ToString());
 

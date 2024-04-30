@@ -2,6 +2,7 @@ using System.Threading.Channels;
 using NLog;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
+using vgt_saga_orders.OrderService;
 using vgt_saga_serialization;
 
 namespace vgt_saga_orders.Orchestrator;
@@ -16,6 +17,7 @@ public class Orchestrator : IDisposable
     private readonly Logger _logger;
     private readonly IConfiguration _config;
     private readonly Utils _jsonUtils;
+    private readonly OrderHandler _orderHandler;
 
     private readonly List<MessageType> _keys =
     [
@@ -42,6 +44,7 @@ public class Orchestrator : IDisposable
 
         _jsonUtils = new Utils(_logger);
         CreateChannels();
+        _orderHandler = new OrderHandler(_repliesChannels[MessageType.OrderRequest], _repliesChannels[MessageType.OrderReply], _logger);
         // TODO: Add tasks for each service
 
         _queues = new RepliesQueueHandler(_config, _logger);
@@ -68,6 +71,7 @@ public class Orchestrator : IDisposable
 
         // send message reply to the appropriate task
         var result = _repliesChannels[message.MessageType].Writer.TryWrite(message);
+        
         if (result) _logger.Debug("Replied routed successfuly to {type} handler", message.MessageType.ToString());
         else _logger.Warn("Something went wrong in routing to {type} handler", message.MessageType.ToString());
 
