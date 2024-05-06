@@ -42,7 +42,7 @@ catch (InvalidDataException e)
 var app = builder.Build();
 
 var logger = LogManager.GetCurrentClassLogger();
-
+var lf = app.Services.GetRequiredService<ILoggerFactory>();
 logger.Info("Hello word");
 
 // Configure the HTTP request pipeline.
@@ -60,8 +60,8 @@ OrderService? orderService = null;
 
 try
 {
-    orchestrator = new Orchestrator(app.Configuration);
-    orderService = new OrderService(app.Configuration);
+    orchestrator = new Orchestrator(app.Configuration, lf);
+    orderService = new OrderService(app.Configuration, lf);
 }
 catch (BrokerUnreachableException)
 {

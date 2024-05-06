@@ -1,4 +1,5 @@
 using System.Threading.Channels;
+using NEventStore;
 using NLog;
 using vgt_saga_serialization;
 
@@ -12,16 +13,19 @@ public class OrderHandler
     public Message CurrentReply { get; set; }
     private Logger _logger;
     
+    private IStoreEvents EventStore { get; }
+    
     public Task RequestsTask { get; set; }
     public Task RepliesTask { get; set; }
     
     public CancellationToken Token { get; }
 
-    public OrderHandler(Channel<Message> replies, Channel<Message> requests, Logger log)
+    public OrderHandler(Channel<Message> replies, Channel<Message> requests, IStoreEvents eventStore, Logger log)
     {
         _logger = log;
         Replies = replies;
         Requests = requests;
+        EventStore = eventStore;
 
         _logger.Debug("Starting tasks handling the messages");
         RequestsTask = Task.Run(HandleRequests);

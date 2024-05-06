@@ -1,8 +1,11 @@
 using System.Threading.Channels;
+using MySqlConnector;
+using NEventStore;
+using NEventStore.Serialization.Json;
 using NLog;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
-using vgt_saga_orders.OrderService;
+using vgt_saga_orders.Orchestrator.ServiceHandlers;
 using vgt_saga_serialization;
 
 namespace vgt_saga_orders.Orchestrator;
@@ -15,9 +18,9 @@ public class Orchestrator : IDisposable
 {
     private readonly RepliesQueueHandler _queues;
     private readonly Logger _logger;
-    private readonly IConfiguration _config;
     private readonly Utils _jsonUtils;
-    private readonly OrderHandler _orderHandler;
+    private readonly OrchOrderHandler _orchOrderHandler;
+    private readonly IStoreEvents _eventStore;
 
     private readonly List<MessageType> _keys =
     [
@@ -35,19 +38,32 @@ public class Orchestrator : IDisposable
     /// Throws propagated exceptions if the configuration data is nowhere to be found.
     /// </summary>
     /// <param name="config"> Configuration with the connection params </param>
+    /// <param name="lf"> Logger factory to use for the Event Store </param>
     /// <exception cref="ArgumentException"> Which variable is missing in the configuration </exception>
     /// <exception cref="BrokerUnreachableException"> Couldn't establish connection with RabbitMQ </exception>
-    public Orchestrator(IConfiguration config)
+    public Orchestrator(IConfiguration config, ILoggerFactory lf)
     {
         _logger = LogManager.GetCurrentClassLogger();
-        _config = config;
+        var config1 = config;
 
         _jsonUtils = new Utils(_logger);
         CreateChannels();
-        _orderHandler = new OrderHandler(_repliesChannels[MessageType.OrderRequest], _repliesChannels[MessageType.OrderReply], _logger);
+
+        var connStr = SecretUtils.GetConnectionString(config1, "DB_ORCH", _logger);
+        
+        _eventStore = Wireup.Init()
+            .WithLoggerFactory(lf)
+            .UsingInMemoryPersistence()
+            .UsingSqlPersistence(MySqlConnectorFactory.Instance, connStr)
+            .InitializeStorageEngine()
+            .UsingJsonSerialization()
+            .Compress()
+            .Build();
+        
+        _orchOrderHandler = new OrchOrderHandler(_repliesChannels[MessageType.OrderRequest], _repliesChannels[MessageType.OrderReply], _eventStore, _logger);
         // TODO: Add tasks for each service
 
-        _queues = new RepliesQueueHandler(_config, _logger);
+        _queues = new RepliesQueueHandler(config1, _logger);
         // TODO: Probably add consumer later after all inits
         _queues.AddRepliesConsumer(SagaRepliesEventHandler);
     }

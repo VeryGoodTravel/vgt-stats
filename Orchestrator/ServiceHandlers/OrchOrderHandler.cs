@@ -1,11 +1,12 @@
 using System.Threading.Channels;
+using NEventStore;
 using NLog;
 using vgt_saga_serialization;
 
 namespace vgt_saga_orders.Orchestrator.ServiceHandlers;
 
 /// <inheritdoc />
-public class OrderHandler : IServiceHandler
+public class OrchOrderHandler : IServiceHandler
 {
     public Channel<Message> Replies { get; }
     public Channel<Message> Requests { get; }
@@ -15,15 +16,22 @@ public class OrderHandler : IServiceHandler
     public Task RequestsTask { get; set; }
     public Task RepliesTask { get; set; }
     
+    private readonly Guid StreamId = Guid.NewGuid();
+    private readonly Guid ReadStreamId = Guid.NewGuid();
+    
+    private IStoreEvents EventStore { get; }
+    
     private Logger _logger;
+    
     
     public CancellationToken Token { get; }
 
-    public OrderHandler(Channel<Message> replies, Channel<Message> requests, Logger log)
+    public OrchOrderHandler(Channel<Message> replies, Channel<Message> requests, IStoreEvents eventStore, Logger log)
     {
         _logger = log;
         Replies = replies;
         Requests = requests;
+        EventStore = eventStore;
         
         _logger.Debug("Starting tasks handling the messages");
         RequestsTask = Task.Run(HandleRequests);
@@ -36,7 +44,6 @@ public class OrderHandler : IServiceHandler
         while (await Requests.Reader.WaitToReadAsync(Token))
         {
             CurrentRequest = await Requests.Reader.ReadAsync(Token);
-            
             // TODO: do something with the request and add it to the handle replies
         }
     }
@@ -46,6 +53,25 @@ public class OrderHandler : IServiceHandler
         while (await Replies.Reader.WaitToReadAsync(Token))
         {
             CurrentReply = await Replies.Reader.ReadAsync(Token);
+            
+            if (CurrentReply.State == SagaState.Begin)
+            {
+                AppendToStream(CurrentRequest);
+            }
         }
+    }
+    
+    private void AppendToStream(Message mess)
+    {
+        using var stream = EventStore.OpenStream(mess.TransactionId, 0, int.MaxValue);
+        
+        stream.Add(new EventMessage { Body = mess });
+        stream.CommitChanges(Guid.NewGuid());
+    }
+    
+    private IEnumerable<Message> LoadFromStream(Guid transaction)
+    {
+        using var stream = EventStore.OpenStream(transaction);
+        return stream.CommittedEvents.Select(p => (Message)p.Body);
     }
 }

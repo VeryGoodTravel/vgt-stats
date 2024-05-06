@@ -1,4 +1,7 @@
 using System.Threading.Channels;
+using MySqlConnector;
+using NEventStore;
+using NEventStore.Serialization.Json;
 using NLog;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
@@ -17,6 +20,7 @@ public class OrderService : IDisposable
     private readonly Logger _logger;
     private readonly IConfiguration _config;
     private readonly Utils _jsonUtils;
+    private readonly IStoreEvents _eventStore;
 
     private readonly List<MessageType> _keys = [MessageType.OrderReply, MessageType.OrderRequest];
     private readonly Dictionary<MessageType, Channel<Message>> _repliesChannels = [];
@@ -32,14 +36,27 @@ public class OrderService : IDisposable
     /// <param name="config"> Configuration with the connection params </param>
     /// <exception cref="ArgumentException"> Which variable is missing in the configuration </exception>
     /// <exception cref="BrokerUnreachableException"> Couldn't establish connection with RabbitMQ </exception>
-    public OrderService(IConfiguration config)
+    public OrderService(IConfiguration config, ILoggerFactory lf)
     {
         _logger = LogManager.GetCurrentClassLogger();
         _config = config;
 
         _jsonUtils = new Utils(_logger);
         CreateChannels();
-        _orderHandler = new OrderHandler(_repliesChannels[MessageType.OrderRequest], _repliesChannels[MessageType.OrderReply], _logger);
+        
+        var connStr = SecretUtils.GetConnectionString(_config, "DB_ORDR", _logger);
+        
+        _eventStore = Wireup.Init()
+            .WithLoggerFactory(lf)
+            .UsingInMemoryPersistence()
+            .UsingSqlPersistence(MySqlConnectorFactory.Instance, connStr)
+            .InitializeStorageEngine()
+            .UsingJsonSerialization()
+            .Compress()
+            .Build();
+
+        
+        _orderHandler = new OrderHandler(_repliesChannels[MessageType.OrderRequest], _repliesChannels[MessageType.OrderReply], _eventStore, _logger);
         
         // TODO: Add tasks for each service
 

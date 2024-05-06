@@ -22,6 +22,10 @@ To update those submodules in the local branch run `git submodule update --remot
 - RABBIT_PAYMENT -> Queue of the requests sent by the orchestrator to the payment gate service.
 - RABBIT_HOTEL -> Queue of the requests sent by the orchestrator to the hotel service.
 - RABBIT_FLIGHT -> Queue of the requests sent by the orchestrator to the flight service.
+- DB_SERVER -> Database server name to use
+- DB_NAME_ORDR -> Database name to use for the order service
+- DB_NAME_ORCH -> Database name to use for the orchestrator
+- DB_PASSWORD -> Database password to use for the database server
 
 ## Implementation documentation
 XML docs of the project available in the repository in the
