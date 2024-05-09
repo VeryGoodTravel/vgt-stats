@@ -24,7 +24,13 @@ public class OrderService : IDisposable
 
     private readonly List<MessageType> _keys = [MessageType.OrderReply, MessageType.OrderRequest];
     private readonly Dictionary<MessageType, Channel<Message>> _repliesChannels = [];
+    private readonly Channel<Message> _publish;
     private readonly OrderHandler _orderHandler;
+    
+    /// <summary>
+    /// Allows tasks cancellation from the outside of the class
+    /// </summary>
+    public CancellationToken Token { get; } = new();
 
     /// <summary>
     /// Constructor of the OrderService class.
@@ -44,7 +50,7 @@ public class OrderService : IDisposable
         _jsonUtils = new Utils(_logger);
         CreateChannels();
         
-        var connStr = SecretUtils.GetConnectionString(_config, "DB_ORDR", _logger);
+        var connStr = SecretUtils.GetConnectionString(_config, "DB_NAME_ORDR", _logger);
         
         _eventStore = Wireup.Init()
             .WithLoggerFactory(lf)
@@ -55,14 +61,34 @@ public class OrderService : IDisposable
             .Compress()
             .Build();
 
+        _publish = Channel.CreateUnbounded<Message>(new UnboundedChannelOptions()
+            { SingleReader = true, SingleWriter = true, AllowSynchronousContinuations = true });
         
-        _orderHandler = new OrderHandler(_repliesChannels[MessageType.OrderRequest], _repliesChannels[MessageType.OrderReply], _eventStore, _logger);
-        
-        // TODO: Add tasks for each service
+        _orderHandler = new OrderHandler(_repliesChannels[MessageType.OrderRequest], _repliesChannels[MessageType.OrderReply], _publish, _eventStore, _logger);
 
         _queues = new OrderQueueHandler(_config, _logger);
-        // TODO: Probably add consumer later after all inits
+        
         _queues.AddRepliesConsumer(SagaOrdersEventHandler);
+    }
+
+    /// <summary>
+    /// Publishes made messages to the right queues
+    /// </summary>
+    private async Task RabbitPublisher()
+    {
+        while (await _publish.Reader.WaitToReadAsync(Token))
+        {
+            var message = await _publish.Reader.ReadAsync(Token);
+
+            if (message.MessageType != MessageType.BackendReply && message.MessageType != MessageType.BackendRequest)
+            {
+                _queues.PublishToBackend(_jsonUtils.Serialize(message));
+            }
+            else
+            {
+                _queues.PublishToOrchestrator( _jsonUtils.Serialize(message));
+            }
+        }
     }
 
     /// <summary>
@@ -89,6 +115,32 @@ public class OrderService : IDisposable
         else _logger.Warn("Something went wrong in routing to {type} handler", message.MessageType.ToString());
 
         _queues.PublishTagResponse(ea, result);
+    }
+    
+    /// <summary>
+    /// Event Handler that hooks to the event of the queue consumer.
+    /// Handles incoming replies from the RabbitMQ and routes them to the appropriate tasks.
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="ea"></param>
+    private void BackendOrdersEventHandler(object? sender, BasicDeliverEventArgs ea)
+    {
+        _logger.Debug("Received response | Tag: {tag}", ea.DeliveryTag);
+        var body = ea.Body.ToArray();
+
+        var reply = _jsonUtils.Deserialize(body);
+
+        if (reply == null) return;
+
+        var message = reply.Value;
+
+        // send message reply to the appropriate task
+        var result = _repliesChannels[message.MessageType].Writer.TryWrite(message);
+        
+        if (result) _logger.Debug("Replied routed successfuly to {type} handler", message.MessageType.ToString());
+        else _logger.Warn("Something went wrong in routing to {type} handler", message.MessageType.ToString());
+
+        _queues.PublishBackendTagResponse(ea, result);
     }
 
     /// <summary>

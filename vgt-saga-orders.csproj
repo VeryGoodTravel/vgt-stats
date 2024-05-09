@@ -44,9 +44,4 @@
         <_ContentIncludedByDefault Remove="vgt-saga-order\Properties\launchSettings.json"/>
     </ItemGroup>
 
-    <ItemGroup>
-        <Folder Include="BrokerHandling\"/>
-        <Folder Include="Orchestrator\CQRS\"/>
-    </ItemGroup>
-
 </Project>

@@ -1,9 +1,10 @@
+using System.Text;
 using NLog;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
 
-namespace vgt_saga_orders.Orchestrator;
+namespace vgt_saga_orders.OrderService;
 
 /// <summary>
 /// Class handling RabbitMQ connections, messages and events;
@@ -36,9 +37,15 @@ public class OrderQueueHandler : IDisposable
     // channels of the queues
     private readonly IModel _sagaReplies;
     private readonly IModel _sagaOrder;
+    private readonly IModel _backendRequests;
+    private readonly IModel _backendReplies;
 
     // replies consumer
-    private EventingBasicConsumer _consumer;
+    private EventingBasicConsumer? _consumer;
+    // backend consumer
+    private EventingBasicConsumer? _backendConsumer;
+
+    private List<string> _queueNames;
 
     /// <summary>
     /// Constructor of the RabbitMQ handling class.
@@ -68,16 +75,49 @@ public class OrderQueueHandler : IDisposable
 
         _logger.Debug("{p}Connected to the RabbitMq server", LoggerPrefix);
 
-        var queues = GetQueuesFromConfig(config);
+        _queueNames = GetQueuesFromConfig(config);
 
         _sagaReplies = _connection.CreateModel();
-        _sagaReplies.QueueDeclare(queues[0]);
+        _sagaReplies.QueueDeclare(_queueNames[0]);
 
         _sagaOrder = _connection.CreateModel();
-        _sagaOrder.QueueDeclare(queues[1]);
+        _sagaOrder.QueueDeclare(_queueNames[1]);
+
+        _backendRequests = _connection.CreateModel();
+        _backendRequests.QueueDeclare(_queueNames[2]);
+
+        _backendReplies = _connection.CreateModel();
+        _backendReplies.ExchangeDeclare(_queueNames[3], ExchangeType.Fanout);
 
         _logger.Debug("{p}Initialized RabbitMq queues", LoggerPrefix);
         _logger.Info("{p}Initialized RabbitMq", LoggerPrefix);
+    }
+
+    /// <summary>
+    /// Publish saga message to Orchestrator queue
+    /// </summary>
+    /// <param name="body"> json body of the message to send </param>
+    public void PublishToOrchestrator(string body)
+    {
+        _logger.Info("{p}Publishing a message to orchestrator", LoggerPrefix);
+        _logger.Debug("{p}Response: {res}", LoggerPrefix, body);
+        var bodyBytes = Encoding.UTF8.GetBytes(body);
+        
+        _sagaReplies.BasicPublish(string.Empty, _queueNames[0], null, bodyBytes);
+    }
+    
+    /// <summary>
+    /// Publish the message to Backend exchange
+    /// answers requests from the backend
+    /// </summary>
+    /// <param name="body"> json body of the message to send </param>
+    public void PublishToBackend(string body)
+    {
+        _logger.Info("{p}Publishing a message to orchestrator", LoggerPrefix);
+        _logger.Debug("{p}Response: {res}", LoggerPrefix, body);
+        var bodyBytes = Encoding.UTF8.GetBytes(body);
+        
+        _sagaReplies.BasicPublish(_queueNames[3], string.Empty, null, bodyBytes);
     }
 
     /// <summary>
@@ -90,6 +130,17 @@ public class OrderQueueHandler : IDisposable
         if (state) _sagaOrder.BasicAck(ea.DeliveryTag, false);
         else _sagaOrder.BasicReject(ea.DeliveryTag, false);
     }
+    
+    /// <summary>
+    /// Handles RabbitMQ message tag and posts the acceptance or rejection,
+    /// </summary>
+    /// <param name="ea"> tag to answer </param>
+    /// <param name="state"> ack/reject </param>
+    public void PublishBackendTagResponse(BasicDeliverEventArgs ea, bool state)
+    {
+        if (state) _backendRequests.BasicAck(ea.DeliveryTag, false);
+        else _backendRequests.BasicReject(ea.DeliveryTag, false);
+    }
 
     /// <summary>
     /// Create queue consumer and hook to the event specifying incoming requests.
@@ -101,6 +152,18 @@ public class OrderQueueHandler : IDisposable
         _logger.Debug("{p}Added Replies consumer", LoggerPrefix);
         _consumer.Received += handler;
         _logger.Debug("{p}Added Replies event handler", LoggerPrefix);
+    }
+    
+    /// <summary>
+    /// Create queue consumer and hook to the event specifying incoming requests.
+    /// </summary>
+    /// <param name="handler"> handler to assign to the consumer event </param>
+    public void AddBackendConsumer(EventHandler<BasicDeliverEventArgs> handler)
+    {
+        _backendConsumer = new EventingBasicConsumer(_sagaOrder);
+        _logger.Debug("{p}Added Backend consumer", LoggerPrefix);
+        _backendConsumer.Received += handler;
+        _logger.Debug("{p}Added Backend event handler", LoggerPrefix);
     }
 
     /// <summary>
@@ -121,6 +184,12 @@ public class OrderQueueHandler : IDisposable
             string.IsNullOrEmpty(config.GetValue<string?>("RABBIT_ORDER"))
                 ? ThrowException<string>("RABBIT_ORDER")
                 : config.GetValue<string?>("RABBIT_ORDER")!,
+            string.IsNullOrEmpty(config.GetValue<string?>("BACKEND_REQUESTS"))
+                ? ThrowException<string>("BACKEND_REQUESTS")
+                : config.GetValue<string?>("BACKEND_REQUESTS")!,
+            string.IsNullOrEmpty(config.GetValue<string?>("BACKEND_REPLIES"))
+                ? ThrowException<string>("BACKEND_REPLIES")
+                : config.GetValue<string?>("BACKEND_REPLIES")!,
         };
 
         return result;
@@ -180,10 +249,14 @@ public class OrderQueueHandler : IDisposable
     {
         _sagaReplies.Close();
         _sagaOrder.Close();
+        _backendRequests.Close();
+        _backendReplies.Close();
 
         _sagaReplies.Dispose();
         _sagaOrder.Dispose();
-
+        _backendRequests.Dispose();
+        _backendReplies.Dispose();
+        
         _connection.Close();
         _connection.Dispose();
     }

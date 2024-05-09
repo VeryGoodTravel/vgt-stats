@@ -49,7 +49,7 @@ public class Orchestrator : IDisposable
         _jsonUtils = new Utils(_logger);
         CreateChannels();
 
-        var connStr = SecretUtils.GetConnectionString(config1, "DB_ORCH", _logger);
+        var connStr = SecretUtils.GetConnectionString(config1, "DB_NAME_ORCH", _logger);
         
         _eventStore = Wireup.Init()
             .WithLoggerFactory(lf)

@@ -6,7 +6,10 @@ Contains both orders microservice and orchestrator
 ## Repository
 
 This repository contains additional submodules containing shared libraries of the SAGA microservices implementations.
-To update those submodules in the local branch run `git submodule update --remote --merge`
+
+To update those submodules in the local branch run:
+
+    git submodule update --remote --merge
 
 ## Configuration
 
@@ -17,6 +20,8 @@ To update those submodules in the local branch run `git submodule update --remot
 - RABBIT_PORT -> Port of the rabbit server.
 - RABBIT_USR -> Username to log in with.
 - RABBIT_PASSWORD -> User password to log in with.
+- BACKEND_REQUESTS -> Queue name of the requests from the backend.
+- BACKEND_REPLIES -> Exchange name to publish finished sagas to.
 - RABBIT_REPLIES -> Queue of the replies sent back to the orchestrator.
 - RABBIT_ORDER -> Queue of the requests sent by the orchestrator to the order service.
 - RABBIT_PAYMENT -> Queue of the requests sent by the orchestrator to the payment gate service.
