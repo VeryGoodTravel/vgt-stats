@@ -8,8 +8,11 @@ namespace vgt_saga_orders.Orchestrator.ServiceHandlers;
 /// <inheritdoc />
 public class OrchOrderHandler : IServiceHandler
 {
+    
     public Channel<Message> Replies { get; }
     public Channel<Message> Requests { get; }
+    
+    public Channel<Message> Publish { get; }
     public Message CurrentRequest { get; set; }
     public Message CurrentReply { get; set; }
     
@@ -26,12 +29,13 @@ public class OrchOrderHandler : IServiceHandler
     
     public CancellationToken Token { get; }
 
-    public OrchOrderHandler(Channel<Message> replies, Channel<Message> requests, IStoreEvents eventStore, Logger log)
+    public OrchOrderHandler(Channel<Message> replies, Channel<Message> requests, Channel<Message> publish, IStoreEvents eventStore, Logger log)
     {
         _logger = log;
         Replies = replies;
         Requests = requests;
         EventStore = eventStore;
+        Publish = publish;
         
         _logger.Debug("Starting tasks handling the messages");
         RequestsTask = Task.Run(HandleRequests);

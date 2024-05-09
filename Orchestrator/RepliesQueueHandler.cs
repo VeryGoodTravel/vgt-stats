@@ -1,3 +1,4 @@
+using System.Text;
 using NLog;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -45,6 +46,8 @@ public class RepliesQueueHandler : IDisposable
 
     // replies consumer
     private EventingBasicConsumer _consumer;
+    
+    private List<string> _queueNames;
 
     /// <summary>
     /// Constructor of the RabbitMQ handling class.
@@ -74,27 +77,79 @@ public class RepliesQueueHandler : IDisposable
 
         _logger.Debug("{p}Connected to the RabbitMq server", LoggerPrefix);
 
-        var queues = GetQueuesFromConfig(config);
+        _queueNames = GetQueuesFromConfig(config);
 
         _sagaReplies = _connection.CreateModel();
-        _sagaReplies.QueueDeclare(queues[0]);
+        _sagaReplies.QueueDeclare(_queueNames[0]);
 
         _sagaOrder = _connection.CreateModel();
-        _sagaOrder.QueueDeclare(queues[1]);
+        _sagaOrder.QueueDeclare(_queueNames[1]);
 
         _sagaPayment = _connection.CreateModel();
-        _sagaPayment.QueueDeclare(queues[2]);
+        _sagaPayment.QueueDeclare(_queueNames[2]);
 
         _sagaHotel = _connection.CreateModel();
-        _sagaHotel.QueueDeclare(queues[3]);
+        _sagaHotel.QueueDeclare(_queueNames[3]);
 
         _sagaFlight = _connection.CreateModel();
-        _sagaFlight.QueueDeclare(queues[4]);
+        _sagaFlight.QueueDeclare(_queueNames[4]);
 
         _logger.Debug("{p}Initialized RabbitMq queues", LoggerPrefix);
         _logger.Info("{p}Initialized RabbitMq", LoggerPrefix);
     }
-
+    
+    /// <summary>
+    /// Publish saga message to Orders queue
+    /// </summary>
+    /// <param name="body"> json body of the message to send </param>
+    public void PublishToOrders(string body)
+    {
+        _logger.Info("{p}Publishing a message to OrderService", LoggerPrefix);
+        _logger.Debug("{p}Response: {res}", LoggerPrefix, body);
+        var bodyBytes = Encoding.UTF8.GetBytes(body);
+        
+        _sagaReplies.BasicPublish(string.Empty, _queueNames[1], null, bodyBytes);
+    }
+    
+    /// <summary>
+    /// Publish saga message to Payment queue
+    /// </summary>
+    /// <param name="body"> json body of the message to send </param>
+    public void PublishToPayment(string body)
+    {
+        _logger.Info("{p}Publishing a message to Payment Service", LoggerPrefix);
+        _logger.Debug("{p}Response: {res}", LoggerPrefix, body);
+        var bodyBytes = Encoding.UTF8.GetBytes(body);
+        
+        _sagaReplies.BasicPublish(string.Empty, _queueNames[2], null, bodyBytes);
+    }
+    
+    /// <summary>
+    /// Publish saga message to Hotel queue
+    /// </summary>
+    /// <param name="body"> json body of the message to send </param>
+    public void PublishToHotel(string body)
+    {
+        _logger.Info("{p}Publishing a message to Hotel Service", LoggerPrefix);
+        _logger.Debug("{p}Response: {res}", LoggerPrefix, body);
+        var bodyBytes = Encoding.UTF8.GetBytes(body);
+        
+        _sagaReplies.BasicPublish(string.Empty, _queueNames[3], null, bodyBytes);
+    }
+    
+    /// <summary>
+    /// Publish saga message to Flight queue
+    /// </summary>
+    /// <param name="body"> json body of the message to send </param>
+    public void PublishToFlight(string body)
+    {
+        _logger.Info("{p}Publishing a message to Flight service", LoggerPrefix);
+        _logger.Debug("{p}Response: {res}", LoggerPrefix, body);
+        var bodyBytes = Encoding.UTF8.GetBytes(body);
+        
+        _sagaReplies.BasicPublish(string.Empty, _queueNames[4], null, bodyBytes);
+    }
+    
     /// <summary>
     /// Handles RabbitMQ message tag and posts the acceptance or rejection,
     /// </summary>

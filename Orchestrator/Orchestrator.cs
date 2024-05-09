@@ -30,6 +30,13 @@ public class Orchestrator : IDisposable
 
     private readonly Dictionary<MessageType, Channel<Message>> _repliesChannels = [];
 
+    private readonly Channel<Message> _publish;
+
+    /// <summary>
+    /// Allows tasks cancellation from the outside of the class
+    /// </summary>
+    public CancellationToken Token { get; } = new();
+
     /// <summary>
     /// Constructor of the Orchestrator class.
     /// Initializes Orchestrator object.
@@ -50,7 +57,7 @@ public class Orchestrator : IDisposable
         CreateChannels();
 
         var connStr = SecretUtils.GetConnectionString(config1, "DB_NAME_ORCH", _logger);
-        
+
         _eventStore = Wireup.Init()
             .WithLoggerFactory(lf)
             .UsingInMemoryPersistence()
@@ -59,13 +66,45 @@ public class Orchestrator : IDisposable
             .UsingJsonSerialization()
             .Compress()
             .Build();
-        
-        _orchOrderHandler = new OrchOrderHandler(_repliesChannels[MessageType.OrderRequest], _repliesChannels[MessageType.OrderReply], _eventStore, _logger);
+
+        _publish = Channel.CreateUnbounded<Message>(new UnboundedChannelOptions()
+            { SingleReader = true, SingleWriter = true, AllowSynchronousContinuations = true });
+
+        _orchOrderHandler = new OrchOrderHandler(_repliesChannels[MessageType.OrderRequest],
+            _repliesChannels[MessageType.OrderReply], _publish, _eventStore, _logger);
         // TODO: Add tasks for each service
 
         _queues = new RepliesQueueHandler(config1, _logger);
+            
         // TODO: Probably add consumer later after all inits
         _queues.AddRepliesConsumer(SagaRepliesEventHandler);
+    }
+
+    /// <summary>
+    /// Publishes made messages to the right queues
+    /// </summary>
+    private async Task RabbitPublisher()
+    {
+        while (await _publish.Reader.WaitToReadAsync(Token))
+        {
+            var message = await _publish.Reader.ReadAsync(Token);
+
+            switch (message.MessageType)
+            {
+                case MessageType.HotelRequest or MessageType.HotelReply:
+                    _queues.PublishToHotel(_jsonUtils.Serialize(message));
+                    break;
+                case MessageType.FlightRequest or MessageType.FlightReply:
+                    _queues.PublishToFlight(_jsonUtils.Serialize(message));
+                    break;
+                case MessageType.OrderRequest or MessageType.OrderReply:
+                    _queues.PublishToOrders(_jsonUtils.Serialize(message));
+                    break;
+                case MessageType.PaymentRequest or MessageType.PaymentReply:
+                    _queues.PublishToPayment(_jsonUtils.Serialize(message));
+                    break;
+            }
+        }
     }
 
     /// <summary>
@@ -87,7 +126,7 @@ public class Orchestrator : IDisposable
 
         // send message reply to the appropriate task
         var result = _repliesChannels[message.MessageType].Writer.TryWrite(message);
-        
+
         if (result) _logger.Debug("Replied routed successfuly to {type} handler", message.MessageType.ToString());
         else _logger.Warn("Something went wrong in routing to {type} handler", message.MessageType.ToString());
 
