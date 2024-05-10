@@ -1,7 +1,11 @@
 using NLog;
+using ILogger = NLog.ILogger;
 
 namespace vgt_saga_orders;
 
+/// <summary>
+/// Utils decoding secrets from the configuration files or environmental variables
+/// </summary>
 public static class SecretUtils
 {
     /// <summary>
@@ -29,11 +33,12 @@ public static class SecretUtils
         
         return $"Server={dbServer};Database={db};Uid={dbUser};Pwd={password};";
     }
-    
+
     /// <summary>
     /// Logs, creates and throws the exception that the specified variable is not present in the config
     /// </summary>
     /// <param name="argument"> Variable not present </param>
+    /// <param name="log"></param>
     /// <typeparam name="T"> type to "return" </typeparam>
     /// <returns></returns>
     /// <exception cref="ArgumentException"> Which variable is missing </exception>

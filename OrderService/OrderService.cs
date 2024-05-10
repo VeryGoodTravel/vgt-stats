@@ -1,8 +1,8 @@
 using System.Threading.Channels;
-using MySqlConnector;
 using NEventStore;
 using NEventStore.Serialization.Json;
 using NLog;
+using Npgsql;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
 using vgt_saga_orders.Orchestrator;
@@ -40,6 +40,7 @@ public class OrderService : IDisposable
     /// Throws propagated exceptions if the configuration data is nowhere to be found.
     /// </summary>
     /// <param name="config"> Configuration with the connection params </param>
+    /// <param name="lf"> Logger factory to use by the event store </param>
     /// <exception cref="ArgumentException"> Which variable is missing in the configuration </exception>
     /// <exception cref="BrokerUnreachableException"> Couldn't establish connection with RabbitMQ </exception>
     public OrderService(IConfiguration config, ILoggerFactory lf)
@@ -55,7 +56,7 @@ public class OrderService : IDisposable
         _eventStore = Wireup.Init()
             .WithLoggerFactory(lf)
             .UsingInMemoryPersistence()
-            .UsingSqlPersistence(MySqlConnectorFactory.Instance, connStr)
+            .UsingSqlPersistence(NpgsqlFactory.Instance, connStr)
             .InitializeStorageEngine()
             .UsingJsonSerialization()
             .Compress()

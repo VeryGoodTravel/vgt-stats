@@ -1,8 +1,8 @@
 using System.Threading.Channels;
-using MySqlConnector;
 using NEventStore;
 using NEventStore.Serialization.Json;
 using NLog;
+using Npgsql;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
 using vgt_saga_orders.Orchestrator.ServiceHandlers;
@@ -61,7 +61,7 @@ public class Orchestrator : IDisposable
         _eventStore = Wireup.Init()
             .WithLoggerFactory(lf)
             .UsingInMemoryPersistence()
-            .UsingSqlPersistence(MySqlConnectorFactory.Instance, connStr)
+            .UsingSqlPersistence(NpgsqlFactory.Instance, connStr)
             .InitializeStorageEngine()
             .UsingJsonSerialization()
             .Compress()

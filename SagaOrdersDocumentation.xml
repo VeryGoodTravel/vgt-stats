@@ -4,10 +4,61 @@
         <name>vgt-saga-orders</name>
     </assembly>
     <members>
+        <member name="T:vgt_saga_orders.Orchestrator.IServiceHandler">
+            <summary>
+            Orchestrator handlers of the services in the SAGA architecture,
+            each service has its own handler.
+            </summary>
+        </member>
+        <member name="P:vgt_saga_orders.Orchestrator.IServiceHandler.Replies">
+            <summary>
+            Replies received from the service
+            </summary>
+        </member>
+        <member name="P:vgt_saga_orders.Orchestrator.IServiceHandler.Requests">
+            <summary>
+            Requests to the service
+            </summary>
+        </member>
+        <member name="P:vgt_saga_orders.Orchestrator.IServiceHandler.Publish">
+            <summary>
+            Messages that need to be sent out to the queues
+            </summary>
+        </member>
+        <member name="P:vgt_saga_orders.Orchestrator.IServiceHandler.CurrentRequest">
+            <summary>
+            current request handled
+            </summary>
+        </member>
+        <member name="P:vgt_saga_orders.Orchestrator.IServiceHandler.CurrentReply">
+            <summary>
+            current reply handled
+            </summary>
+        </member>
+        <member name="P:vgt_saga_orders.Orchestrator.IServiceHandler.RequestsTask">
+            <summary>
+            Task handling requests of the service
+            </summary>
+        </member>
+        <member name="P:vgt_saga_orders.Orchestrator.IServiceHandler.RepliesTask">
+            <summary>
+            Task handling replies to this service
+            </summary>
+        </member>
+        <member name="P:vgt_saga_orders.Orchestrator.IServiceHandler.Token">
+            <summary>
+            Cancellation token allowing a graceful exit of the class
+            </summary>
+        </member>
         <member name="T:vgt_saga_orders.Orchestrator.Orchestrator">
             <summary>
             Saga Orchestrator;
             handles all saga transactions of user orders.
+            </summary>
+        </member>
+        <member name="P:vgt_saga_orders.Orchestrator.Orchestrator.Token">
+            <summary>
+            Allows tasks cancellation from the outside of the class
             </summary>
         </member>
         <member name="M:vgt_saga_orders.Orchestrator.Orchestrator.#ctor(Microsoft.Extensions.Configuration.IConfiguration,Microsoft.Extensions.Logging.ILoggerFactory)">
@@ -22,6 +73,11 @@
             <param name="lf"> Logger factory to use for the Event Store </param>
             <exception cref="T:System.ArgumentException"> Which variable is missing in the configuration </exception>
             <exception cref="T:RabbitMQ.Client.Exceptions.BrokerUnreachableException"> Couldn't establish connection with RabbitMQ </exception>
+        </member>
+        <member name="M:vgt_saga_orders.Orchestrator.Orchestrator.RabbitPublisher">
+            <summary>
+            Publishes made messages to the right queues
+            </summary>
         </member>
         <member name="M:vgt_saga_orders.Orchestrator.Orchestrator.SagaRepliesEventHandler(System.Object,RabbitMQ.Client.Events.BasicDeliverEventArgs)">
             <summary>
@@ -78,6 +134,30 @@
             <exception cref="T:System.ArgumentException"> Which variable is missing in the configuration </exception>
             <exception cref="T:RabbitMQ.Client.Exceptions.BrokerUnreachableException"> Couldn't establish connection </exception>
         </member>
+        <member name="M:vgt_saga_orders.Orchestrator.RepliesQueueHandler.PublishToOrders(System.String)">
+            <summary>
+            Publish saga message to Orders queue
+            </summary>
+            <param name="body"> json body of the message to send </param>
+        </member>
+        <member name="M:vgt_saga_orders.Orchestrator.RepliesQueueHandler.PublishToPayment(System.String)">
+            <summary>
+            Publish saga message to Payment queue
+            </summary>
+            <param name="body"> json body of the message to send </param>
+        </member>
+        <member name="M:vgt_saga_orders.Orchestrator.RepliesQueueHandler.PublishToHotel(System.String)">
+            <summary>
+            Publish saga message to Hotel queue
+            </summary>
+            <param name="body"> json body of the message to send </param>
+        </member>
+        <member name="M:vgt_saga_orders.Orchestrator.RepliesQueueHandler.PublishToFlight(System.String)">
+            <summary>
+            Publish saga message to Flight queue
+            </summary>
+            <param name="body"> json body of the message to send </param>
+        </member>
         <member name="M:vgt_saga_orders.Orchestrator.RepliesQueueHandler.PublishTagResponse(RabbitMQ.Client.Events.BasicDeliverEventArgs,System.Boolean)">
             <summary>
             Handles RabbitMQ message tag and posts the acceptance or rejection,
@@ -123,6 +203,41 @@
         </member>
         <member name="T:vgt_saga_orders.Orchestrator.ServiceHandlers.OrchOrderHandler">
             <inheritdoc />
+        </member>
+        <member name="P:vgt_saga_orders.Orchestrator.ServiceHandlers.OrchOrderHandler.Replies">
+            <inheritdoc />
+        </member>
+        <member name="P:vgt_saga_orders.Orchestrator.ServiceHandlers.OrchOrderHandler.Requests">
+            <inheritdoc />
+        </member>
+        <member name="P:vgt_saga_orders.Orchestrator.ServiceHandlers.OrchOrderHandler.Publish">
+            <inheritdoc />
+        </member>
+        <member name="P:vgt_saga_orders.Orchestrator.ServiceHandlers.OrchOrderHandler.CurrentRequest">
+            <inheritdoc />
+        </member>
+        <member name="P:vgt_saga_orders.Orchestrator.ServiceHandlers.OrchOrderHandler.CurrentReply">
+            <inheritdoc />
+        </member>
+        <member name="P:vgt_saga_orders.Orchestrator.ServiceHandlers.OrchOrderHandler.RequestsTask">
+            <inheritdoc />
+        </member>
+        <member name="P:vgt_saga_orders.Orchestrator.ServiceHandlers.OrchOrderHandler.RepliesTask">
+            <inheritdoc />
+        </member>
+        <member name="P:vgt_saga_orders.Orchestrator.ServiceHandlers.OrchOrderHandler.Token">
+            <inheritdoc />
+        </member>
+        <member name="M:vgt_saga_orders.Orchestrator.ServiceHandlers.OrchOrderHandler.#ctor(System.Threading.Channels.Channel{vgt_saga_serialization.Message},System.Threading.Channels.Channel{vgt_saga_serialization.Message},System.Threading.Channels.Channel{vgt_saga_serialization.Message},NEventStore.IStoreEvents,NLog.Logger)">
+            <summary>
+            Creates Orchestrator tasks handling Order service
+            Saves, Changes and Routes messages from and to OrderService
+            </summary>
+            <param name="replies"> Replies to the order service </param>
+            <param name="requests"> Requests from the order service </param>
+            <param name="publish"> Messages that need to be sent to the broker </param>
+            <param name="eventStore"> Event sourcing </param>
+            <param name="log"> logger to use </param>
         </member>
         <member name="T:vgt_saga_orders.OrderService.OrderHandler">
             <summary>
@@ -306,6 +421,7 @@
             Throws propagated exceptions if the configuration data is nowhere to be found.
             </summary>
             <param name="config"> Configuration with the connection params </param>
+            <param name="lf"> Logger factory to use by the event store </param>
             <exception cref="T:System.ArgumentException"> Which variable is missing in the configuration </exception>
             <exception cref="T:RabbitMQ.Client.Exceptions.BrokerUnreachableException"> Couldn't establish connection with RabbitMQ </exception>
         </member>
@@ -339,6 +455,11 @@
         <member name="M:vgt_saga_orders.OrderService.OrderService.Dispose">
             <inheritdoc/>
         </member>
+        <member name="T:vgt_saga_orders.SecretUtils">
+            <summary>
+            Utils decoding secrets from the configuration files or environmental variables
+            </summary>
+        </member>
         <member name="M:vgt_saga_orders.SecretUtils.GetConnectionString(Microsoft.Extensions.Configuration.IConfiguration,System.String,NLog.Logger)">
             <summary>
             Gets SQL connection data from the configuration and merges that data into the connection string
@@ -354,6 +475,7 @@
             Logs, creates and throws the exception that the specified variable is not present in the config
             </summary>
             <param name="argument"> Variable not present </param>
+            <param name="log"></param>
             <typeparam name="T"> type to "return" </typeparam>
             <returns></returns>
             <exception cref="T:System.ArgumentException"> Which variable is missing </exception>

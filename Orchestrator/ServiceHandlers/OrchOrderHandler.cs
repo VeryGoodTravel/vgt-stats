@@ -9,26 +9,37 @@ namespace vgt_saga_orders.Orchestrator.ServiceHandlers;
 public class OrchOrderHandler : IServiceHandler
 {
     
+    /// <inheritdoc />
     public Channel<Message> Replies { get; }
+    /// <inheritdoc />
     public Channel<Message> Requests { get; }
-    
+    /// <inheritdoc />
     public Channel<Message> Publish { get; }
+    /// <inheritdoc />
     public Message CurrentRequest { get; set; }
+    /// <inheritdoc />
     public Message CurrentReply { get; set; }
-    
+    /// <inheritdoc />
     public Task RequestsTask { get; set; }
+    /// <inheritdoc />
     public Task RepliesTask { get; set; }
-    
-    private readonly Guid StreamId = Guid.NewGuid();
-    private readonly Guid ReadStreamId = Guid.NewGuid();
     
     private IStoreEvents EventStore { get; }
     
     private Logger _logger;
-    
-    
-    public CancellationToken Token { get; }
 
+    /// <inheritdoc />
+    public CancellationToken Token { get; } = new();
+
+    /// <summary>
+    /// Creates Orchestrator tasks handling Order service
+    /// Saves, Changes and Routes messages from and to OrderService
+    /// </summary>
+    /// <param name="replies"> Replies to the order service </param>
+    /// <param name="requests"> Requests from the order service </param>
+    /// <param name="publish"> Messages that need to be sent to the broker </param>
+    /// <param name="eventStore"> Event sourcing </param>
+    /// <param name="log"> logger to use </param>
     public OrchOrderHandler(Channel<Message> replies, Channel<Message> requests, Channel<Message> publish, IStoreEvents eventStore, Logger log)
     {
         _logger = log;
@@ -62,6 +73,8 @@ public class OrchOrderHandler : IServiceHandler
             {
                 AppendToStream(CurrentRequest);
             }
+
+            LoadFromStream(CurrentReply.TransactionId);
         }
     }
     

@@ -3,6 +3,10 @@ using vgt_saga_serialization;
 
 namespace vgt_saga_orders.Orchestrator;
 
+/// <summary>
+/// Orchestrator handlers of the services in the SAGA architecture,
+/// each service has its own handler.
+/// </summary>
 public interface IServiceHandler
 {
     /// <summary>
@@ -27,4 +31,19 @@ public interface IServiceHandler
     /// current reply handled
     /// </summary>
     public Message CurrentReply { get; }
+    
+    /// <summary>
+    /// Task handling requests of the service
+    /// </summary>
+    public Task RequestsTask { get; set; }
+    /// <summary>
+    /// Task handling replies to this service
+    /// </summary>
+    public Task RepliesTask { get; set; }
+    
+    /// <summary>
+    /// Cancellation token allowing a graceful exit of the class
+    /// </summary>
+    public CancellationToken Token { get; }
+    
 }

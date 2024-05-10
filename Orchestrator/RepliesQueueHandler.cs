@@ -45,9 +45,9 @@ public class RepliesQueueHandler : IDisposable
     private readonly IModel _sagaFlight;
 
     // replies consumer
-    private EventingBasicConsumer _consumer;
+    private EventingBasicConsumer? _consumer;
     
-    private List<string> _queueNames;
+    private readonly List<string> _queueNames;
 
     /// <summary>
     /// Constructor of the RabbitMQ handling class.
