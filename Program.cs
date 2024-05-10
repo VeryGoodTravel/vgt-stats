@@ -1,8 +1,17 @@
-﻿using NLog;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using NLog;
 using NLog.Extensions.Logging;
 using RabbitMQ.Client.Exceptions;
-using vgt_saga_orders.Orchestrator;
-using vgt_saga_orders.OrderService;
+using vgt_saga_payment.PaymentService;
 using ILogger = NLog.ILogger;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -55,21 +64,19 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-Orchestrator? orchestrator = null;
-OrderService? orderService = null;
+PaymentService? paymentService = null;
 
 try
 {
-    orchestrator = new Orchestrator(app.Configuration, lf);
-    orderService = new OrderService(app.Configuration, lf);
+    paymentService = new PaymentService(app.Configuration, lf);
 }
 catch (BrokerUnreachableException)
 {
-    GracefulExit(app, logger, [orchestrator, orderService]);
+    GracefulExit(app, logger, [paymentService]);
 }
 catch (ArgumentException)
 {
-    GracefulExit(app, logger, [orchestrator, orderService]);
+    GracefulExit(app, logger, [paymentService]);
 }
 
 var summaries = new[]

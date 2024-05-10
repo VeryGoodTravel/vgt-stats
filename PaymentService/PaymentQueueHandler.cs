@@ -1,10 +1,13 @@
+using System;
+using System.Collections.Generic;
 using System.Text;
+using Microsoft.Extensions.Configuration;
 using NLog;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
 
-namespace vgt_saga_orders.OrderService;
+namespace vgt_saga_payment.PaymentService;
 
 /// <summary>
 /// Class handling RabbitMQ connections, messages and events;
@@ -27,7 +30,7 @@ namespace vgt_saga_orders.OrderService;
 /// </list>
 /// </p>
 /// </summary>
-public class OrderQueueHandler : IDisposable
+public class PaymentQueueHandler : IDisposable
 {
     private const string LoggerPrefix = "OrderQueue| ";
     private readonly ConnectionFactory _factory;
@@ -57,7 +60,7 @@ public class OrderQueueHandler : IDisposable
     /// <param name="log"> logger to log to </param>
     /// <exception cref="ArgumentException"> Which variable is missing in the configuration </exception>
     /// <exception cref="BrokerUnreachableException"> Couldn't establish connection </exception>
-    public OrderQueueHandler(IConfiguration config, Logger log)
+    public PaymentQueueHandler(IConfiguration config, Logger log)
     {
         _logger = log;
         _logger.Debug("{p}Initializing RabbitMq connections", LoggerPrefix);

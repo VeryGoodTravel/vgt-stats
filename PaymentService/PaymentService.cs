@@ -1,22 +1,27 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Channels;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using NEventStore;
 using NEventStore.Serialization.Json;
 using NLog;
 using Npgsql;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
-using vgt_saga_orders.Orchestrator;
 using vgt_saga_serialization;
 
-namespace vgt_saga_orders.OrderService;
+namespace vgt_saga_payment.PaymentService;
 
 /// <summary>
 /// Saga Orchestrator;
 /// handles all saga transactions of user orders.
 /// </summary>
-public class OrderService : IDisposable
+public class PaymentService : IDisposable
 {
-    private readonly OrderQueueHandler _queues;
+    private readonly PaymentQueueHandler _queues;
     private readonly Logger _logger;
     private readonly IConfiguration _config;
     private readonly Utils _jsonUtils;
@@ -25,7 +30,7 @@ public class OrderService : IDisposable
     private readonly List<MessageType> _keys = [MessageType.OrderReply, MessageType.OrderRequest];
     private readonly Dictionary<MessageType, Channel<Message>> _repliesChannels = [];
     private readonly Channel<Message> _publish;
-    private readonly OrderHandler _orderHandler;
+    private readonly PaymentHandler _paymentHandler;
     
     /// <summary>
     /// Allows tasks cancellation from the outside of the class
@@ -33,8 +38,8 @@ public class OrderService : IDisposable
     public CancellationToken Token { get; } = new();
 
     /// <summary>
-    /// Constructor of the OrderService class.
-    /// Initializes OrderService object.
+    /// Constructor of the PaymentService class.
+    /// Initializes PaymentService object.
     /// Creates, initializes and opens connections to the database and rabbitmq
     /// based on configuration data present and handled by specified handling objects.
     /// Throws propagated exceptions if the configuration data is nowhere to be found.
@@ -43,7 +48,7 @@ public class OrderService : IDisposable
     /// <param name="lf"> Logger factory to use by the event store </param>
     /// <exception cref="ArgumentException"> Which variable is missing in the configuration </exception>
     /// <exception cref="BrokerUnreachableException"> Couldn't establish connection with RabbitMQ </exception>
-    public OrderService(IConfiguration config, ILoggerFactory lf)
+    public PaymentService(IConfiguration config, ILoggerFactory lf)
     {
         _logger = LogManager.GetCurrentClassLogger();
         _config = config;
@@ -65,9 +70,9 @@ public class OrderService : IDisposable
         _publish = Channel.CreateUnbounded<Message>(new UnboundedChannelOptions()
             { SingleReader = true, SingleWriter = true, AllowSynchronousContinuations = true });
         
-        _orderHandler = new OrderHandler(_repliesChannels[MessageType.OrderRequest], _repliesChannels[MessageType.OrderReply], _publish, _eventStore, _logger);
+        _paymentHandler = new PaymentHandler(_repliesChannels[MessageType.OrderRequest], _repliesChannels[MessageType.OrderReply], _publish, _eventStore, _logger);
 
-        _queues = new OrderQueueHandler(_config, _logger);
+        _queues = new PaymentQueueHandler(_config, _logger);
         
         _queues.AddRepliesConsumer(SagaOrdersEventHandler);
     }

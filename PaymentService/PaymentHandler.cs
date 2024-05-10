@@ -1,16 +1,18 @@
+using System.Threading;
 using System.Threading.Channels;
+using System.Threading.Tasks;
 using NEventStore;
 using NLog;
 using vgt_saga_serialization;
 
-namespace vgt_saga_orders.OrderService;
+namespace vgt_saga_payment.PaymentService;
 
 /// <summary>
 /// Handles saga orders beginning, end and failures
 /// Creates the appropriate saga messages
 /// Handles the data in messages
 /// </summary>
-public class OrderHandler
+public class PaymentHandler
 {
     /// <summary>
     /// Replies received from the orchestrator
@@ -63,7 +65,7 @@ public class OrderHandler
     /// <param name="publish"> Queue with messages that need to be published to RabbitMQ </param>
     /// <param name="eventStore"> EventStore for the event sourcing and CQRS </param>
     /// <param name="log"> logger to log to </param>
-    public OrderHandler(Channel<Message> replies, Channel<Message> requests, Channel<Message> publish, IStoreEvents eventStore, Logger log)
+    public PaymentHandler(Channel<Message> replies, Channel<Message> requests, Channel<Message> publish, IStoreEvents eventStore, Logger log)
     {
         _logger = log;
         Replies = replies;

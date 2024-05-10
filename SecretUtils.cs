@@ -1,7 +1,8 @@
+using System;
+using Microsoft.Extensions.Configuration;
 using NLog;
-using ILogger = NLog.ILogger;
 
-namespace vgt_saga_orders;
+namespace vgt_saga_payment;
 
 /// <summary>
 /// Utils decoding secrets from the configuration files or environmental variables
