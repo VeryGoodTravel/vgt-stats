@@ -1,6 +1,6 @@
-# vgt-saga-payment
+# vgt-saga-hotel
 
-Main repository of the payment service.
+Main repository of the Hotel service.
 
 ## Repository
 
@@ -20,11 +20,11 @@ To update those submodules in the local branch run:
 - RABBIT_USR -> Username to log in with.
 - RABBIT_PASSWORD -> User password to log in with.
 - RABBIT_REPLIES -> Queue of the replies sent back to the orchestrator.
-- RABBIT_PAYMENT -> Queue of the requests sent by the orchestrator to the payment gate service.
+- RABBIT_HOTEL -> Queue of the requests sent by the orchestrator to the hotel service.
 - DB_SERVER -> Database server name to use
 - DB_NAME_PAYM -> Database name to use for the payment service
 - DB_PASSWORD -> Database password to use for the database server
 
 ## Implementation documentation
 XML docs of the project available in the repository in the
-file [SagaPaymentsDocumentation.xml](SagaPaymentsDocumentation.xml)
+file [SagaHotelDocumentation.xml](SagaHotelDocumentation.xml)

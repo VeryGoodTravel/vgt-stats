@@ -1,17 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using NLog;
+﻿using NLog;
 using NLog.Extensions.Logging;
 using RabbitMQ.Client.Exceptions;
-using vgt_saga_payment.PaymentService;
+using vgt_saga_hotel;
+using vgt_saga_hotel.HotelService;
 using ILogger = NLog.ILogger;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -64,11 +55,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-PaymentService? paymentService = null;
+HotelService? paymentService = null;
 
 try
 {
-    paymentService = new PaymentService(app.Configuration, lf);
+    paymentService = new HotelService(app.Configuration, lf);
 }
 catch (BrokerUnreachableException)
 {
@@ -132,7 +123,10 @@ async Task AwaitAppStop(WebApplication wA)
     await wA.DisposeAsync();
 }
 
-internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+namespace vgt_saga_hotel
 {
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+    {
+        public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    }
 }

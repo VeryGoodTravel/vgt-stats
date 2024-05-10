@@ -1,27 +1,21 @@
-using System;
-using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Channels;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using NEventStore;
 using NEventStore.Serialization.Json;
 using NLog;
 using Npgsql;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
-using vgt_saga_serialization;
+using vgt_saga_hotel.vgt_saga_serialization;
 
-namespace vgt_saga_payment.PaymentService;
+namespace vgt_saga_hotel.HotelService;
 
 /// <summary>
 /// Saga Payment service;
 /// handles all payments in the transaction.
 /// </summary>
-public class PaymentService : IDisposable
+public class HotelService : IDisposable
 {
-    private readonly PaymentQueueHandler _queues;
+    private readonly HotelQueueHandler _queues;
     private readonly Logger _logger;
     private readonly IConfiguration _config;
     private readonly Utils _jsonUtils;
@@ -29,7 +23,7 @@ public class PaymentService : IDisposable
     
     private readonly Channel<Message> _payments;
     private readonly Channel<Message> _publish;
-    private readonly PaymentHandler _paymentHandler;
+    private readonly HotelHandler _hotelHandler;
     
     /// <summary>
     /// Allows tasks cancellation from the outside of the class
@@ -37,8 +31,8 @@ public class PaymentService : IDisposable
     public CancellationToken Token { get; } = new();
 
     /// <summary>
-    /// Constructor of the PaymentService class.
-    /// Initializes PaymentService object.
+    /// Constructor of the HotelService class.
+    /// Initializes HotelService object.
     /// Creates, initializes and opens connections to the database and rabbitmq
     /// based on configuration data present and handled by specified handling objects.
     /// Throws propagated exceptions if the configuration data is nowhere to be found.
@@ -47,7 +41,7 @@ public class PaymentService : IDisposable
     /// <param name="lf"> Logger factory to use by the event store </param>
     /// <exception cref="ArgumentException"> Which variable is missing in the configuration </exception>
     /// <exception cref="BrokerUnreachableException"> Couldn't establish connection with RabbitMQ </exception>
-    public PaymentService(IConfiguration config, ILoggerFactory lf)
+    public HotelService(IConfiguration config, ILoggerFactory lf)
     {
         _logger = LogManager.GetCurrentClassLogger();
         _config = config;
@@ -70,9 +64,9 @@ public class PaymentService : IDisposable
         _publish = Channel.CreateUnbounded<Message>(new UnboundedChannelOptions()
             { SingleReader = true, SingleWriter = true, AllowSynchronousContinuations = true });
         
-        _paymentHandler = new PaymentHandler(_payments, _publish, _eventStore, _logger);
+        _hotelHandler = new HotelHandler(_payments, _publish, _eventStore, _logger);
 
-        _queues = new PaymentQueueHandler(_config, _logger);
+        _queues = new HotelQueueHandler(_config, _logger);
         
         _queues.AddRepliesConsumer(SagaOrdersEventHandler);
     }

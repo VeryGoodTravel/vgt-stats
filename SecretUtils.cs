@@ -1,8 +1,6 @@
-using System;
-using Microsoft.Extensions.Configuration;
 using NLog;
 
-namespace vgt_saga_payment;
+namespace vgt_saga_hotel;
 
 /// <summary>
 /// Utils decoding secrets from the configuration files or environmental variables

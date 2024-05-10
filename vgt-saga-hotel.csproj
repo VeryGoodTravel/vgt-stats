@@ -2,12 +2,12 @@
 
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
-        <RootNamespace>vgt_saga_payment</RootNamespace>
+        <RootNamespace>vgt_saga_hotel</RootNamespace>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <DocumentationFile>SagaPaymentsDocumentation.xml</DocumentationFile>
+        <DocumentationFile>SagaHotelDocumentation.xml</DocumentationFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -36,12 +36,12 @@
     </ItemGroup>
 
     <ItemGroup>
-        <_ContentIncludedByDefault Remove="vgt-saga-payment\appsettings.Development.json"/>
-        <_ContentIncludedByDefault Remove="vgt-saga-payment\appsettings.json"/>
-        <_ContentIncludedByDefault Remove="vgt-saga-payment\obj\project.assets.json"/>
-        <_ContentIncludedByDefault Remove="vgt-saga-payment\obj\project.packagespec.json"/>
-        <_ContentIncludedByDefault Remove="vgt-saga-payment\obj\vgt-saga-order.csproj.nuget.dgspec.json"/>
-        <_ContentIncludedByDefault Remove="vgt-saga-payment\Properties\launchSettings.json"/>
+        <_ContentIncludedByDefault Remove="vgt-saga-hotel\appsettings.Development.json"/>
+        <_ContentIncludedByDefault Remove="vgt-saga-hotel\appsettings.json"/>
+        <_ContentIncludedByDefault Remove="vgt-saga-hotel\obj\project.assets.json"/>
+        <_ContentIncludedByDefault Remove="vgt-saga-hotel\obj\project.packagespec.json"/>
+        <_ContentIncludedByDefault Remove="vgt-saga-hotel\obj\vgt-saga-hotel.csproj.nuget.dgspec.json"/>
+        <_ContentIncludedByDefault Remove="vgt-saga-hotel\Properties\launchSettings.json"/>
     </ItemGroup>
 
 </Project>
