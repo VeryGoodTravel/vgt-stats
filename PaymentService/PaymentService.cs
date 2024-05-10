@@ -16,8 +16,8 @@ using vgt_saga_serialization;
 namespace vgt_saga_payment.PaymentService;
 
 /// <summary>
-/// Saga Orchestrator;
-/// handles all saga transactions of user orders.
+/// Saga Payment service;
+/// handles all payments in the transaction.
 /// </summary>
 public class PaymentService : IDisposable
 {
@@ -26,9 +26,8 @@ public class PaymentService : IDisposable
     private readonly IConfiguration _config;
     private readonly Utils _jsonUtils;
     private readonly IStoreEvents _eventStore;
-
-    private readonly List<MessageType> _keys = [MessageType.OrderReply, MessageType.OrderRequest];
-    private readonly Dictionary<MessageType, Channel<Message>> _repliesChannels = [];
+    
+    private readonly Channel<Message> _payments;
     private readonly Channel<Message> _publish;
     private readonly PaymentHandler _paymentHandler;
     
@@ -54,9 +53,10 @@ public class PaymentService : IDisposable
         _config = config;
 
         _jsonUtils = new Utils(_logger);
-        CreateChannels();
+        _payments = Channel.CreateUnbounded<Message>(new UnboundedChannelOptions()
+            { SingleReader = true, SingleWriter = true, AllowSynchronousContinuations = true });
         
-        var connStr = SecretUtils.GetConnectionString(_config, "DB_NAME_ORDR", _logger);
+        var connStr = SecretUtils.GetConnectionString(_config, "DB_NAME_PAYM", _logger);
         
         _eventStore = Wireup.Init()
             .WithLoggerFactory(lf)
@@ -70,7 +70,7 @@ public class PaymentService : IDisposable
         _publish = Channel.CreateUnbounded<Message>(new UnboundedChannelOptions()
             { SingleReader = true, SingleWriter = true, AllowSynchronousContinuations = true });
         
-        _paymentHandler = new PaymentHandler(_repliesChannels[MessageType.OrderRequest], _repliesChannels[MessageType.OrderReply], _publish, _eventStore, _logger);
+        _paymentHandler = new PaymentHandler(_payments, _publish, _eventStore, _logger);
 
         _queues = new PaymentQueueHandler(_config, _logger);
         
@@ -86,14 +86,7 @@ public class PaymentService : IDisposable
         {
             var message = await _publish.Reader.ReadAsync(Token);
 
-            if (message.MessageType != MessageType.BackendReply && message.MessageType != MessageType.BackendRequest)
-            {
-                _queues.PublishToBackend(_jsonUtils.Serialize(message));
-            }
-            else
-            {
-                _queues.PublishToOrchestrator( _jsonUtils.Serialize(message));
-            }
+            _queues.PublishToOrchestrator( _jsonUtils.Serialize(message));
         }
     }
 
@@ -115,54 +108,12 @@ public class PaymentService : IDisposable
         var message = reply.Value;
 
         // send message reply to the appropriate task
-        var result = _repliesChannels[message.MessageType].Writer.TryWrite(message);
+        var result = _payments.Writer.TryWrite(message);
         
         if (result) _logger.Debug("Replied routed successfuly to {type} handler", message.MessageType.ToString());
         else _logger.Warn("Something went wrong in routing to {type} handler", message.MessageType.ToString());
 
         _queues.PublishTagResponse(ea, result);
-    }
-    
-    /// <summary>
-    /// Event Handler that hooks to the event of the queue consumer.
-    /// Handles incoming replies from the RabbitMQ and routes them to the appropriate tasks.
-    /// </summary>
-    /// <param name="sender"></param>
-    /// <param name="ea"></param>
-    private void BackendOrdersEventHandler(object? sender, BasicDeliverEventArgs ea)
-    {
-        _logger.Debug("Received response | Tag: {tag}", ea.DeliveryTag);
-        var body = ea.Body.ToArray();
-
-        var reply = _jsonUtils.Deserialize(body);
-
-        if (reply == null) return;
-
-        var message = reply.Value;
-
-        // send message reply to the appropriate task
-        var result = _repliesChannels[message.MessageType].Writer.TryWrite(message);
-        
-        if (result) _logger.Debug("Replied routed successfuly to {type} handler", message.MessageType.ToString());
-        else _logger.Warn("Something went wrong in routing to {type} handler", message.MessageType.ToString());
-
-        _queues.PublishBackendTagResponse(ea, result);
-    }
-
-    /// <summary>
-    /// Creates async channels to send received messages with to the tasks handling them.
-    /// Channels are stored in the dictionary MessageType - Channel
-    /// </summary>
-    private void CreateChannels()
-    {
-        _logger.Debug("Creating tasks message channels");
-        foreach (var key in _keys)
-        {
-            _repliesChannels[key] = Channel.CreateUnbounded<Message>(new UnboundedChannelOptions()
-                { SingleReader = true, SingleWriter = true, AllowSynchronousContinuations = true });
-        }
-
-        _logger.Debug("Tasks message channels created");
     }
 
     /// <inheritdoc/>

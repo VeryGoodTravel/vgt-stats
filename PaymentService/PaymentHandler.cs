@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using NEventStore;
 using NLog;
 using vgt_saga_serialization;
+using vgt_saga_serialization.MessageBodies;
 
 namespace vgt_saga_payment.PaymentService;
 
@@ -15,11 +16,7 @@ namespace vgt_saga_payment.PaymentService;
 public class PaymentHandler
 {
     /// <summary>
-    /// Replies received from the orchestrator
-    /// </summary>
-    public Channel<Message> Replies { get; }
-    /// <summary>
-    /// Requests to the orchestrator
+    /// Requests from the orchestrator
     /// </summary>
     public Channel<Message> Requests { get; }
     
@@ -45,11 +42,6 @@ public class PaymentHandler
     /// Task of the requests handler
     /// </summary>
     public Task RequestsTask { get; set; }
-    
-    /// <summary>
-    /// Task of the Replies handler
-    /// </summary>
-    public Task RepliesTask { get; set; }
 
     /// <summary>
     /// Token allowing tasks cancellation from the outside of the class
@@ -60,46 +52,48 @@ public class PaymentHandler
     /// Default constructor of the order handler class
     /// that handles data and prepares messages concerning saga orders beginning, end and failure
     /// </summary>
-    /// <param name="replies"> Queue with the replies from the orchestrator </param>
-    /// <param name="requests"> Queue with the requests to the orchestrator </param>
+    /// <param name="requests"> Queue with the requests from the orchestrator </param>
     /// <param name="publish"> Queue with messages that need to be published to RabbitMQ </param>
     /// <param name="eventStore"> EventStore for the event sourcing and CQRS </param>
     /// <param name="log"> logger to log to </param>
-    public PaymentHandler(Channel<Message> replies, Channel<Message> requests, Channel<Message> publish, IStoreEvents eventStore, Logger log)
+    public PaymentHandler(Channel<Message> requests, Channel<Message> publish, IStoreEvents eventStore, Logger log)
     {
         _logger = log;
-        Replies = replies;
         Requests = requests;
         Publish = publish;
         EventStore = eventStore;
 
         _logger.Debug("Starting tasks handling the messages");
-        RequestsTask = Task.Run(HandleRequests);
-        RepliesTask = Task.Run(HandleReplies);
+        RequestsTask = Task.Run(HandlePayments);
         _logger.Debug("Tasks handling the messages started");
     }
 
-    private async Task HandleRequests()
+    private async Task HandlePayments()
     {
         while (await Requests.Reader.WaitToReadAsync(Token))
         {
-            CurrentRequest = await Requests.Reader.ReadAsync(Token);
+            var message = await Requests.Reader.ReadAsync(Token);
 
-            // TODO: do something with the request
-            
-            await Publish.Writer.WriteAsync(CurrentRequest, Token);
+            _ = Task.Run(() => Payment(message), Token);
         }
     }
-    
-    private async Task HandleReplies()
+
+    private async Task Payment(Message message)
     {
-        while (await Replies.Reader.WaitToReadAsync(Token))
+        var rnd = new Random();
+        await Task.Delay(rnd.Next(0, 100), Token);
+        var result = rnd.Next(0, 1) switch
         {
-            CurrentReply = await Replies.Reader.ReadAsync(Token);
-            
-            // TODO: do something with the reply
-            
-            await Publish.Writer.WriteAsync(CurrentReply, Token);
-        }
+            1 => SagaState.PaymentAccept,
+            _ => SagaState.PaymentFailed
+        };
+        
+        message.MessageType = MessageType.PaymentReply;
+        message.MessageId += 1;
+        message.State = result;
+        message.Body = new PaymentReply();
+        message.CreationDate = DateTime.Now;
+        
+        await Publish.Writer.WriteAsync(CurrentRequest, Token);
     }
 }
