@@ -27,4 +27,4 @@ To update those submodules in the local branch run:
 
 ## Implementation documentation
 XML docs of the project available in the repository in the
-file [SagaOrdersDocumentation.xml](SagaOrdersDocumentation.xml)
+file [SagaPaymentsDocumentation.xml](SagaPaymentsDocumentation.xml)
