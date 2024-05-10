@@ -4,289 +4,54 @@
         <name>vgt-saga-payment</name>
     </assembly>
     <members>
-        <member name="T:vgt_saga_orders.Orchestrator.IServiceHandler">
-            <summary>
-            Orchestrator handlers of the services in the SAGA architecture,
-            each service has its own handler.
-            </summary>
-        </member>
-        <member name="P:vgt_saga_orders.Orchestrator.IServiceHandler.Replies">
-            <summary>
-            Replies received from the service
-            </summary>
-        </member>
-        <member name="P:vgt_saga_orders.Orchestrator.IServiceHandler.Requests">
-            <summary>
-            Requests to the service
-            </summary>
-        </member>
-        <member name="P:vgt_saga_orders.Orchestrator.IServiceHandler.Publish">
-            <summary>
-            Messages that need to be sent out to the queues
-            </summary>
-        </member>
-        <member name="P:vgt_saga_orders.Orchestrator.IServiceHandler.CurrentRequest">
-            <summary>
-            current request handled
-            </summary>
-        </member>
-        <member name="P:vgt_saga_orders.Orchestrator.IServiceHandler.CurrentReply">
-            <summary>
-            current reply handled
-            </summary>
-        </member>
-        <member name="P:vgt_saga_orders.Orchestrator.IServiceHandler.RequestsTask">
-            <summary>
-            Task handling requests of the service
-            </summary>
-        </member>
-        <member name="P:vgt_saga_orders.Orchestrator.IServiceHandler.RepliesTask">
-            <summary>
-            Task handling replies to this service
-            </summary>
-        </member>
-        <member name="P:vgt_saga_orders.Orchestrator.IServiceHandler.Token">
-            <summary>
-            Cancellation token allowing a graceful exit of the class
-            </summary>
-        </member>
-        <member name="T:vgt_saga_orders.Orchestrator.Orchestrator">
-            <summary>
-            Saga Orchestrator;
-            handles all saga transactions of user orders.
-            </summary>
-        </member>
-        <member name="P:vgt_saga_orders.Orchestrator.Orchestrator.Token">
-            <summary>
-            Allows tasks cancellation from the outside of the class
-            </summary>
-        </member>
-        <member name="M:vgt_saga_orders.Orchestrator.Orchestrator.#ctor(Microsoft.Extensions.Configuration.IConfiguration,Microsoft.Extensions.Logging.ILoggerFactory)">
-            <summary>
-            Constructor of the Orchestrator class.
-            Initializes Orchestrator object.
-            Creates, initializes and opens connections to the database and rabbitmq
-            based on configuration data present and handled by specified handling objects.
-            Throws propagated exceptions if the configuration data is nowhere to be found.
-            </summary>
-            <param name="config"> Configuration with the connection params </param>
-            <param name="lf"> Logger factory to use for the Event Store </param>
-            <exception cref="T:System.ArgumentException"> Which variable is missing in the configuration </exception>
-            <exception cref="T:RabbitMQ.Client.Exceptions.BrokerUnreachableException"> Couldn't establish connection with RabbitMQ </exception>
-        </member>
-        <member name="M:vgt_saga_orders.Orchestrator.Orchestrator.RabbitPublisher">
-            <summary>
-            Publishes made messages to the right queues
-            </summary>
-        </member>
-        <member name="M:vgt_saga_orders.Orchestrator.Orchestrator.SagaRepliesEventHandler(System.Object,RabbitMQ.Client.Events.BasicDeliverEventArgs)">
-            <summary>
-            Event Handler that hooks to the event of the queue consumer.
-            Handles incoming replies from the RabbitMQ and routes them to the appropriate tasks.
-            </summary>
-            <param name="sender"></param>
-            <param name="ea"></param>
-        </member>
-        <member name="M:vgt_saga_orders.Orchestrator.Orchestrator.CreateChannels">
-            <summary>
-            Creates async channels to send received messages with to the tasks handling them.
-            Channels are stored in the dictionary MessageType - Channel
-            </summary>
-        </member>
-        <member name="M:vgt_saga_orders.Orchestrator.Orchestrator.Dispose">
-            <inheritdoc/>
-        </member>
-        <member name="T:vgt_saga_orders.Orchestrator.RepliesQueueHandler">
-            <summary>
-            Class handling RabbitMQ connections, messages and events;
-            all concerning SAGA transactions with an orchestrator.
-            Configuration data needed for this class is as follows.
-            <p>
-            <list type="bullet">
-                <listheader><term>Rabbit connection:</term></listheader>
-                <item><term>RABBIT_HOST</term> <description> - Address of the rabbit server.</description></item>
-                <item><term>RABBIT_VIRT_HOST</term> <description> - Virtual host of the rabbit server.</description></item>
-                <item><term>RABBIT_PORT</term> <description> - Port of the rabbit server.</description></item>
-                <item><term>RABBIT_USR</term> <description> - Username to login with.</description></item>
-                <item><term>RABBIT_PASSWORD</term> <description> - User password to login with.</description></item>
-            </list>
-            and
-            <list type="bullet">
-                <listheader><term>Queue names:</term></listheader>
-                <item><term>RABBIT_REPLIES</term> <description> - Queue of the replies sent back to the orchestrator.</description></item>
-                <item><term>RABBIT_ORDER</term> <description> - Queue of the requests sent by the orchestrator to the order service.</description></item>
-                <item><term>RABBIT_PAYMENT</term> <description> - Queue of the requests sent by the orchestrator to the payment gate service.</description></item>
-                <item><term>RABBIT_HOTEL</term> <description> - Queue of the requests sent by the orchestrator to the hotel service.</description></item>
-                <item><term>RABBIT_FLIGHT</term> <description> - Queue of the requests sent by the orchestrator to the flight service.</description></item>
-            </list>
-            </p>
-            </summary>
-        </member>
-        <member name="M:vgt_saga_orders.Orchestrator.RepliesQueueHandler.#ctor(Microsoft.Extensions.Configuration.IConfiguration,NLog.Logger)">
-            <summary>
-            Constructor of the RabbitMQ handling class.
-            Initializes RabbitMQ handling object.
-            Creates connection string/factory based on configuration data present
-            with exceptions thrown if the data is nowhere to be found.
-            </summary>
-            <param name="config"> Configuration with the connection params </param>
-            <param name="log"> logger to log to </param>
-            <exception cref="T:System.ArgumentException"> Which variable is missing in the configuration </exception>
-            <exception cref="T:RabbitMQ.Client.Exceptions.BrokerUnreachableException"> Couldn't establish connection </exception>
-        </member>
-        <member name="M:vgt_saga_orders.Orchestrator.RepliesQueueHandler.PublishToOrders(System.String)">
-            <summary>
-            Publish saga message to Orders queue
-            </summary>
-            <param name="body"> json body of the message to send </param>
-        </member>
-        <member name="M:vgt_saga_orders.Orchestrator.RepliesQueueHandler.PublishToPayment(System.String)">
-            <summary>
-            Publish saga message to Payment queue
-            </summary>
-            <param name="body"> json body of the message to send </param>
-        </member>
-        <member name="M:vgt_saga_orders.Orchestrator.RepliesQueueHandler.PublishToHotel(System.String)">
-            <summary>
-            Publish saga message to Hotel queue
-            </summary>
-            <param name="body"> json body of the message to send </param>
-        </member>
-        <member name="M:vgt_saga_orders.Orchestrator.RepliesQueueHandler.PublishToFlight(System.String)">
-            <summary>
-            Publish saga message to Flight queue
-            </summary>
-            <param name="body"> json body of the message to send </param>
-        </member>
-        <member name="M:vgt_saga_orders.Orchestrator.RepliesQueueHandler.PublishTagResponse(RabbitMQ.Client.Events.BasicDeliverEventArgs,System.Boolean)">
-            <summary>
-            Handles RabbitMQ message tag and posts the acceptance or rejection,
-            </summary>
-            <param name="ea"> tag to answer </param>
-            <param name="state"> ack/reject </param>
-        </member>
-        <member name="M:vgt_saga_orders.Orchestrator.RepliesQueueHandler.AddRepliesConsumer(System.EventHandler{RabbitMQ.Client.Events.BasicDeliverEventArgs})">
-            <summary>
-            Create queue consumer and hook to the event specifying incoming replies.
-            </summary>
-            <param name="handler"> handler to assign to the consumer event </param>
-        </member>
-        <member name="M:vgt_saga_orders.Orchestrator.RepliesQueueHandler.GetQueuesFromConfig(Microsoft.Extensions.Configuration.IConfiguration)">
-            <summary>
-            Get the list of all saga queues defined in the configuration.
-            Logs, Creates and Throws ArgumentError if a queue name is not present.
-            </summary>
-            <param name="config"> Configuration to take the values from </param>
-            <returns> List of queue names </returns>
-            <exception cref="T:System.ArgumentException"> Which variable is missing </exception>
-        </member>
-        <member name="M:vgt_saga_orders.Orchestrator.RepliesQueueHandler.GetConnectionFactoryFromConfig(Microsoft.Extensions.Configuration.IConfiguration)">
-            <summary>
-            Creates connection factory to the RabbitMQ
-            based on the data specified in the configuration file or env variables
-            </summary>
-            <param name="config"> Configuration to use </param>
-            <returns> ConnectionFactory with specified connection params </returns>
-            <exception cref="T:System.ArgumentException"> Which variable is missing </exception>
-        </member>
-        <member name="M:vgt_saga_orders.Orchestrator.RepliesQueueHandler.ThrowException``1(System.String)">
-            <summary>
-            Logs, creates and throws the exception that the specified variable is not present in the config
-            </summary>
-            <param name="argument"> Variable not present </param>
-            <typeparam name="T"> type to "return" </typeparam>
-            <returns></returns>
-            <exception cref="T:System.ArgumentException"> Which variable is missing </exception>
-        </member>
-        <member name="M:vgt_saga_orders.Orchestrator.RepliesQueueHandler.Dispose">
-            <inheritdoc/>
-        </member>
-        <member name="T:vgt_saga_orders.Orchestrator.ServiceHandlers.OrchOrderHandler">
-            <inheritdoc />
-        </member>
-        <member name="P:vgt_saga_orders.Orchestrator.ServiceHandlers.OrchOrderHandler.Replies">
-            <inheritdoc />
-        </member>
-        <member name="P:vgt_saga_orders.Orchestrator.ServiceHandlers.OrchOrderHandler.Requests">
-            <inheritdoc />
-        </member>
-        <member name="P:vgt_saga_orders.Orchestrator.ServiceHandlers.OrchOrderHandler.Publish">
-            <inheritdoc />
-        </member>
-        <member name="P:vgt_saga_orders.Orchestrator.ServiceHandlers.OrchOrderHandler.CurrentRequest">
-            <inheritdoc />
-        </member>
-        <member name="P:vgt_saga_orders.Orchestrator.ServiceHandlers.OrchOrderHandler.CurrentReply">
-            <inheritdoc />
-        </member>
-        <member name="P:vgt_saga_orders.Orchestrator.ServiceHandlers.OrchOrderHandler.RequestsTask">
-            <inheritdoc />
-        </member>
-        <member name="P:vgt_saga_orders.Orchestrator.ServiceHandlers.OrchOrderHandler.RepliesTask">
-            <inheritdoc />
-        </member>
-        <member name="P:vgt_saga_orders.Orchestrator.ServiceHandlers.OrchOrderHandler.Token">
-            <inheritdoc />
-        </member>
-        <member name="M:vgt_saga_orders.Orchestrator.ServiceHandlers.OrchOrderHandler.#ctor(System.Threading.Channels.Channel{vgt_saga_serialization.Message},System.Threading.Channels.Channel{vgt_saga_serialization.Message},System.Threading.Channels.Channel{vgt_saga_serialization.Message},NEventStore.IStoreEvents,NLog.Logger)">
-            <summary>
-            Creates Orchestrator tasks handling Order service
-            Saves, Changes and Routes messages from and to PaymentService
-            </summary>
-            <param name="replies"> Replies to the order service </param>
-            <param name="requests"> Requests from the order service </param>
-            <param name="publish"> Messages that need to be sent to the broker </param>
-            <param name="eventStore"> Event sourcing </param>
-            <param name="log"> logger to use </param>
-        </member>
-        <member name="T:vgt_saga_orders.PaymentService.PaymentHandler">
+        <member name="T:vgt_saga_payment.PaymentService.PaymentHandler">
             <summary>
             Handles saga orders beginning, end and failures
             Creates the appropriate saga messages
             Handles the data in messages
             </summary>
         </member>
-        <member name="P:vgt_saga_orders.PaymentService.PaymentHandler.Replies">
+        <member name="P:vgt_saga_payment.PaymentService.PaymentHandler.Replies">
             <summary>
             Replies received from the orchestrator
             </summary>
         </member>
-        <member name="P:vgt_saga_orders.PaymentService.PaymentHandler.Requests">
+        <member name="P:vgt_saga_payment.PaymentService.PaymentHandler.Requests">
             <summary>
             Requests to the orchestrator
             </summary>
         </member>
-        <member name="P:vgt_saga_orders.PaymentService.PaymentHandler.Publish">
+        <member name="P:vgt_saga_payment.PaymentService.PaymentHandler.Publish">
             <summary>
             Messages that need to be sent out to the queues
             </summary>
         </member>
-        <member name="P:vgt_saga_orders.PaymentService.PaymentHandler.CurrentRequest">
+        <member name="P:vgt_saga_payment.PaymentService.PaymentHandler.CurrentRequest">
             <summary>
             current request handled
             </summary>
         </member>
-        <member name="P:vgt_saga_orders.PaymentService.PaymentHandler.CurrentReply">
+        <member name="P:vgt_saga_payment.PaymentService.PaymentHandler.CurrentReply">
             <summary>
             current reply handled
             </summary>
         </member>
-        <member name="P:vgt_saga_orders.PaymentService.PaymentHandler.RequestsTask">
+        <member name="P:vgt_saga_payment.PaymentService.PaymentHandler.RequestsTask">
             <summary>
             Task of the requests handler
             </summary>
         </member>
-        <member name="P:vgt_saga_orders.PaymentService.PaymentHandler.RepliesTask">
+        <member name="P:vgt_saga_payment.PaymentService.PaymentHandler.RepliesTask">
             <summary>
             Task of the Replies handler
             </summary>
         </member>
-        <member name="P:vgt_saga_orders.PaymentService.PaymentHandler.Token">
+        <member name="P:vgt_saga_payment.PaymentService.PaymentHandler.Token">
             <summary>
             Token allowing tasks cancellation from the outside of the class
             </summary>
         </member>
-        <member name="M:vgt_saga_orders.PaymentService.PaymentHandler.#ctor(System.Threading.Channels.Channel{vgt_saga_serialization.Message},System.Threading.Channels.Channel{vgt_saga_serialization.Message},System.Threading.Channels.Channel{vgt_saga_serialization.Message},NEventStore.IStoreEvents,NLog.Logger)">
+        <member name="M:vgt_saga_payment.PaymentService.PaymentHandler.#ctor(System.Threading.Channels.Channel{vgt_saga_serialization.Message},System.Threading.Channels.Channel{vgt_saga_serialization.Message},System.Threading.Channels.Channel{vgt_saga_serialization.Message},NEventStore.IStoreEvents,NLog.Logger)">
             <summary>
             Default constructor of the order handler class
             that handles data and prepares messages concerning saga orders beginning, end and failure
@@ -297,7 +62,7 @@
             <param name="eventStore"> EventStore for the event sourcing and CQRS </param>
             <param name="log"> logger to log to </param>
         </member>
-        <member name="T:vgt_saga_orders.PaymentService.PaymentQueueHandler">
+        <member name="T:vgt_saga_payment.PaymentService.PaymentQueueHandler">
             <summary>
             Class handling RabbitMQ connections, messages and events;
             all concerning SAGA transactions with an orchestrator.
@@ -320,7 +85,7 @@
             </p>
             </summary>
         </member>
-        <member name="M:vgt_saga_orders.PaymentService.PaymentQueueHandler.#ctor(Microsoft.Extensions.Configuration.IConfiguration,NLog.Logger)">
+        <member name="M:vgt_saga_payment.PaymentService.PaymentQueueHandler.#ctor(Microsoft.Extensions.Configuration.IConfiguration,NLog.Logger)">
             <summary>
             Constructor of the RabbitMQ handling class.
             Initializes RabbitMQ handling object.
@@ -332,46 +97,46 @@
             <exception cref="T:System.ArgumentException"> Which variable is missing in the configuration </exception>
             <exception cref="T:RabbitMQ.Client.Exceptions.BrokerUnreachableException"> Couldn't establish connection </exception>
         </member>
-        <member name="M:vgt_saga_orders.PaymentService.PaymentQueueHandler.PublishToOrchestrator(System.String)">
+        <member name="M:vgt_saga_payment.PaymentService.PaymentQueueHandler.PublishToOrchestrator(System.String)">
             <summary>
             Publish saga message to Orchestrator queue
             </summary>
             <param name="body"> json body of the message to send </param>
         </member>
-        <member name="M:vgt_saga_orders.PaymentService.PaymentQueueHandler.PublishToBackend(System.String)">
+        <member name="M:vgt_saga_payment.PaymentService.PaymentQueueHandler.PublishToBackend(System.String)">
             <summary>
             Publish the message to Backend exchange
             answers requests from the backend
             </summary>
             <param name="body"> json body of the message to send </param>
         </member>
-        <member name="M:vgt_saga_orders.PaymentService.PaymentQueueHandler.PublishTagResponse(RabbitMQ.Client.Events.BasicDeliverEventArgs,System.Boolean)">
+        <member name="M:vgt_saga_payment.PaymentService.PaymentQueueHandler.PublishTagResponse(RabbitMQ.Client.Events.BasicDeliverEventArgs,System.Boolean)">
             <summary>
             Handles RabbitMQ message tag and posts the acceptance or rejection,
             </summary>
             <param name="ea"> tag to answer </param>
             <param name="state"> ack/reject </param>
         </member>
-        <member name="M:vgt_saga_orders.PaymentService.PaymentQueueHandler.PublishBackendTagResponse(RabbitMQ.Client.Events.BasicDeliverEventArgs,System.Boolean)">
+        <member name="M:vgt_saga_payment.PaymentService.PaymentQueueHandler.PublishBackendTagResponse(RabbitMQ.Client.Events.BasicDeliverEventArgs,System.Boolean)">
             <summary>
             Handles RabbitMQ message tag and posts the acceptance or rejection,
             </summary>
             <param name="ea"> tag to answer </param>
             <param name="state"> ack/reject </param>
         </member>
-        <member name="M:vgt_saga_orders.PaymentService.PaymentQueueHandler.AddRepliesConsumer(System.EventHandler{RabbitMQ.Client.Events.BasicDeliverEventArgs})">
+        <member name="M:vgt_saga_payment.PaymentService.PaymentQueueHandler.AddRepliesConsumer(System.EventHandler{RabbitMQ.Client.Events.BasicDeliverEventArgs})">
             <summary>
             Create queue consumer and hook to the event specifying incoming requests.
             </summary>
             <param name="handler"> handler to assign to the consumer event </param>
         </member>
-        <member name="M:vgt_saga_orders.PaymentService.PaymentQueueHandler.AddBackendConsumer(System.EventHandler{RabbitMQ.Client.Events.BasicDeliverEventArgs})">
+        <member name="M:vgt_saga_payment.PaymentService.PaymentQueueHandler.AddBackendConsumer(System.EventHandler{RabbitMQ.Client.Events.BasicDeliverEventArgs})">
             <summary>
             Create queue consumer and hook to the event specifying incoming requests.
             </summary>
             <param name="handler"> handler to assign to the consumer event </param>
         </member>
-        <member name="M:vgt_saga_orders.PaymentService.PaymentQueueHandler.GetQueuesFromConfig(Microsoft.Extensions.Configuration.IConfiguration)">
+        <member name="M:vgt_saga_payment.PaymentService.PaymentQueueHandler.GetQueuesFromConfig(Microsoft.Extensions.Configuration.IConfiguration)">
             <summary>
             Get the list of all saga queues defined in the configuration.
             Logs, Creates and Throws ArgumentError if a queue name is not present.
@@ -380,7 +145,7 @@
             <returns> List of queue names </returns>
             <exception cref="T:System.ArgumentException"> Which variable is missing </exception>
         </member>
-        <member name="M:vgt_saga_orders.PaymentService.PaymentQueueHandler.GetConnectionFactoryFromConfig(Microsoft.Extensions.Configuration.IConfiguration)">
+        <member name="M:vgt_saga_payment.PaymentService.PaymentQueueHandler.GetConnectionFactoryFromConfig(Microsoft.Extensions.Configuration.IConfiguration)">
             <summary>
             Creates connection factory to the RabbitMQ
             based on the data specified in the configuration file or env variables
@@ -389,7 +154,7 @@
             <returns> ConnectionFactory with specified connection params </returns>
             <exception cref="T:System.ArgumentException"> Which variable is missing </exception>
         </member>
-        <member name="M:vgt_saga_orders.PaymentService.PaymentQueueHandler.ThrowException``1(System.String)">
+        <member name="M:vgt_saga_payment.PaymentService.PaymentQueueHandler.ThrowException``1(System.String)">
             <summary>
             Logs, creates and throws the exception that the specified variable is not present in the config
             </summary>
@@ -398,21 +163,21 @@
             <returns></returns>
             <exception cref="T:System.ArgumentException"> Which variable is missing </exception>
         </member>
-        <member name="M:vgt_saga_orders.PaymentService.PaymentQueueHandler.Dispose">
+        <member name="M:vgt_saga_payment.PaymentService.PaymentQueueHandler.Dispose">
             <inheritdoc/>
         </member>
-        <member name="T:vgt_saga_orders.PaymentService.PaymentService">
+        <member name="T:vgt_saga_payment.PaymentService.PaymentService">
             <summary>
             Saga Orchestrator;
             handles all saga transactions of user orders.
             </summary>
         </member>
-        <member name="P:vgt_saga_orders.PaymentService.PaymentService.Token">
+        <member name="P:vgt_saga_payment.PaymentService.PaymentService.Token">
             <summary>
             Allows tasks cancellation from the outside of the class
             </summary>
         </member>
-        <member name="M:vgt_saga_orders.PaymentService.PaymentService.#ctor(Microsoft.Extensions.Configuration.IConfiguration,Microsoft.Extensions.Logging.ILoggerFactory)">
+        <member name="M:vgt_saga_payment.PaymentService.PaymentService.#ctor(Microsoft.Extensions.Configuration.IConfiguration,Microsoft.Extensions.Logging.ILoggerFactory)">
             <summary>
             Constructor of the PaymentService class.
             Initializes PaymentService object.
@@ -425,12 +190,12 @@
             <exception cref="T:System.ArgumentException"> Which variable is missing in the configuration </exception>
             <exception cref="T:RabbitMQ.Client.Exceptions.BrokerUnreachableException"> Couldn't establish connection with RabbitMQ </exception>
         </member>
-        <member name="M:vgt_saga_orders.PaymentService.PaymentService.RabbitPublisher">
+        <member name="M:vgt_saga_payment.PaymentService.PaymentService.RabbitPublisher">
             <summary>
             Publishes made messages to the right queues
             </summary>
         </member>
-        <member name="M:vgt_saga_orders.PaymentService.PaymentService.SagaOrdersEventHandler(System.Object,RabbitMQ.Client.Events.BasicDeliverEventArgs)">
+        <member name="M:vgt_saga_payment.PaymentService.PaymentService.SagaOrdersEventHandler(System.Object,RabbitMQ.Client.Events.BasicDeliverEventArgs)">
             <summary>
             Event Handler that hooks to the event of the queue consumer.
             Handles incoming replies from the RabbitMQ and routes them to the appropriate tasks.
@@ -438,7 +203,7 @@
             <param name="sender"></param>
             <param name="ea"></param>
         </member>
-        <member name="M:vgt_saga_orders.PaymentService.PaymentService.BackendOrdersEventHandler(System.Object,RabbitMQ.Client.Events.BasicDeliverEventArgs)">
+        <member name="M:vgt_saga_payment.PaymentService.PaymentService.BackendOrdersEventHandler(System.Object,RabbitMQ.Client.Events.BasicDeliverEventArgs)">
             <summary>
             Event Handler that hooks to the event of the queue consumer.
             Handles incoming replies from the RabbitMQ and routes them to the appropriate tasks.
@@ -446,21 +211,21 @@
             <param name="sender"></param>
             <param name="ea"></param>
         </member>
-        <member name="M:vgt_saga_orders.PaymentService.PaymentService.CreateChannels">
+        <member name="M:vgt_saga_payment.PaymentService.PaymentService.CreateChannels">
             <summary>
             Creates async channels to send received messages with to the tasks handling them.
             Channels are stored in the dictionary MessageType - Channel
             </summary>
         </member>
-        <member name="M:vgt_saga_orders.PaymentService.PaymentService.Dispose">
+        <member name="M:vgt_saga_payment.PaymentService.PaymentService.Dispose">
             <inheritdoc/>
         </member>
-        <member name="T:vgt_saga_orders.SecretUtils">
+        <member name="T:vgt_saga_payment.SecretUtils">
             <summary>
             Utils decoding secrets from the configuration files or environmental variables
             </summary>
         </member>
-        <member name="M:vgt_saga_orders.SecretUtils.GetConnectionString(Microsoft.Extensions.Configuration.IConfiguration,System.String,NLog.Logger)">
+        <member name="M:vgt_saga_payment.SecretUtils.GetConnectionString(Microsoft.Extensions.Configuration.IConfiguration,System.String,NLog.Logger)">
             <summary>
             Gets SQL connection data from the configuration and merges that data into the connection string
             </summary>
@@ -470,7 +235,7 @@
             <returns> Merged connection string </returns>
             <exception cref="T:System.ArgumentException"> Thrown if configuration param was not found </exception>
         </member>
-        <member name="M:vgt_saga_orders.SecretUtils.ThrowException``1(System.String,NLog.Logger)">
+        <member name="M:vgt_saga_payment.SecretUtils.ThrowException``1(System.String,NLog.Logger)">
             <summary>
             Logs, creates and throws the exception that the specified variable is not present in the config
             </summary>
@@ -675,14 +440,14 @@
         </member>
         <member name="T:vgt_saga_serialization.MessageBodies.BackendReply">
             <summary>
-            reply from the PaymentService to all the backends
+            reply from the OrderService to all the backends
             notifies the backends of the finished saga transaction
             It is sent to all instances of the backend
             </summary>
         </member>
         <member name="M:vgt_saga_serialization.MessageBodies.BackendReply.#ctor">
             <summary>
-            reply from the PaymentService to all the backends
+            reply from the OrderService to all the backends
             notifies the backends of the finished saga transaction
             It is sent to all instances of the backend
             </summary>
