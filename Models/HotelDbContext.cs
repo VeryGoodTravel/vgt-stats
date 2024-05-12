@@ -21,14 +21,17 @@ public class HotelDbContext : DbContext
     public DbSet<Booking> Bookings { get; set; }
 
     /// <inheritdoc />
-    public HotelDbContext(string connectionString)
+    public HotelDbContext(DbContextOptions<HotelDbContext> options)
+        : base(options)
     {
-        _connectionString = connectionString;
     }
-    
-    /// <inheritdoc />
-    protected override void OnConfiguring(DbContextOptionsBuilder options)
-        => options.UseNpgsql(_connectionString);
+    // {
+    //     _connectionString = connectionString;
+    // }
+    //
+    // /// <inheritdoc />
+    // protected override void OnConfiguring(DbContextOptionsBuilder options)
+    //     => options.UseNpgsql(_connectionString);
 }
 
 /// <summary>
@@ -36,6 +39,9 @@ public class HotelDbContext : DbContext
 /// </summary>
 public class Booking()
 {
+    
+    public int BookingId { get; set; }
+    
     /// <summary>
     /// Hotel the booking concerns
     /// </summary>
@@ -74,6 +80,8 @@ public class Booking()
 /// </summary>
 public class RoomDb()
 {
+    public int RoomDbId { get; set; }
+    
     /// <summary>
     /// Amount of the rooms offered by the hotel
     /// </summary>
@@ -125,6 +133,7 @@ public class RoomDb()
 /// </summary>
 public class HotelDb()
 {
+    public int HotelDbId { get; set; }
     /// <summary>
     /// Name of the hotel from scrapper
     /// </summary>

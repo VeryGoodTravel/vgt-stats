@@ -1,8 +1,10 @@
-﻿using NLog;
+﻿using Microsoft.EntityFrameworkCore;
+using NLog;
 using NLog.Extensions.Logging;
 using RabbitMQ.Client.Exceptions;
 using vgt_saga_hotel;
 using vgt_saga_hotel.HotelService;
+using vgt_saga_hotel.Models;
 using ILogger = NLog.ILogger;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,9 +41,12 @@ catch (InvalidDataException e)
     Environment.Exit(0);
 }
 
+var logger = LogManager.GetCurrentClassLogger();
+
+builder.Services.AddDbContext<HotelDbContext>(options => options.UseNpgsql(SecretUtils.GetConnectionString(builder.Configuration, "DB_NAME_HOTEL", logger)));
+
 var app = builder.Build();
 
-var logger = LogManager.GetCurrentClassLogger();
 var lf = app.Services.GetRequiredService<ILoggerFactory>();
 logger.Info("Hello word");
 
@@ -130,3 +135,4 @@ namespace vgt_saga_hotel
         public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
     }
 }
+

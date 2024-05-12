@@ -16,6 +16,7 @@ Database consists of the 3 main tables:
  - RoomDb -> contains definition of the room types offered by the hotel with their respectful amount available in the hotel,
  - Booking -> Defines booked hotel rooms. Specifies if the booking is temporary with the DateTime of the temporary booking and the time the booking takes place. Is assigned to a hotel and room type.
 
+![Database schema](DB_HOTEL.png)
 
 ## Repository
 
@@ -39,6 +40,7 @@ To update those submodules in the local branch run:
 - DB_SERVER -> Database server name to use
 - DB_NAME_HOTEL -> Database name to use for the hotel service
 - DB_PASSWORD -> Database password to use for the database server
+- DB_USER -> Username to use on db server connection
 
 ## Implementation documentation
 XML docs of the project available in the repository in the

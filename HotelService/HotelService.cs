@@ -1,4 +1,5 @@
 using System.Threading.Channels;
+using Microsoft.EntityFrameworkCore;
 using NEventStore;
 using NEventStore.Serialization.Json;
 using Newtonsoft.Json;
@@ -57,9 +58,9 @@ public class HotelService : IDisposable
             { SingleReader = true, SingleWriter = true, AllowSynchronousContinuations = true });
         
         var connStr = SecretUtils.GetConnectionString(_config, "DB_NAME_HOTEL", _logger);
-
-        _writeDb = new HotelDbContext(connStr);
-        _readDb = new HotelDbContext(connStr);
+        var options = new DbContextOptions<HotelDbContext>();
+        _writeDb = new HotelDbContext(options);
+        _readDb = new HotelDbContext(options);
         
         _publish = Channel.CreateUnbounded<Message>(new UnboundedChannelOptions()
             { SingleReader = true, SingleWriter = true, AllowSynchronousContinuations = true });
