@@ -60,7 +60,7 @@ public class HotelService : IDisposable
 
         _writeDb = new HotelDbContext(connStr);
         _readDb = new HotelDbContext(connStr);
-
+        
         _publish = Channel.CreateUnbounded<Message>(new UnboundedChannelOptions()
             { SingleReader = true, SingleWriter = true, AllowSynchronousContinuations = true });
         
