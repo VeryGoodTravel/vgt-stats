@@ -2,9 +2,9 @@
 using NLog;
 using NLog.Extensions.Logging;
 using RabbitMQ.Client.Exceptions;
-using vgt_saga_hotel;
-using vgt_saga_hotel.HotelService;
-using vgt_saga_hotel.Models;
+using vgt_saga_flight;
+using vgt_saga_flight.FlightService;
+using vgt_saga_flight.Models;
 using ILogger = NLog.ILogger;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -43,7 +43,7 @@ catch (InvalidDataException e)
 
 var logger = LogManager.GetCurrentClassLogger();
 
-builder.Services.AddDbContext<HotelDbContext>(options => options.UseNpgsql(SecretUtils.GetConnectionString(builder.Configuration, "DB_NAME_HOTEL", logger)));
+builder.Services.AddDbContext<FlightDbContext>(options => options.UseNpgsql(SecretUtils.GetConnectionString(builder.Configuration, "DB_NAME_FLIGHT", logger)));
 
 var app = builder.Build();
 
@@ -60,11 +60,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-HotelService? hotelService = null;
+FlightService? hotelService = null;
 
 try
 {
-    hotelService = new HotelService(app.Configuration, lf);
+    hotelService = new FlightService(app.Configuration, lf);
 }
 catch (BrokerUnreachableException)
 {
@@ -128,7 +128,7 @@ async Task AwaitAppStop(WebApplication wA)
     await wA.DisposeAsync();
 }
 
-namespace vgt_saga_hotel
+namespace vgt_saga_flight
 {
     internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
     {

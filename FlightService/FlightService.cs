@@ -1,25 +1,23 @@
 using System.Threading.Channels;
 using Microsoft.EntityFrameworkCore;
 using NEventStore;
-using NEventStore.Serialization.Json;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NLog;
-using Npgsql;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
-using vgt_saga_hotel.Models;
+using vgt_saga_flight.Models;
 using vgt_saga_serialization;
 
-namespace vgt_saga_hotel.HotelService;
+namespace vgt_saga_flight.FlightService;
 
 /// <summary>
 /// Saga Payment service;
 /// handles all payments in the transaction.
 /// </summary>
-public class HotelService : IDisposable
+public class FlightService : IDisposable
 {
-    private readonly HotelQueueHandler _queues;
+    private readonly FlightQueueHandler _queues;
     private readonly Logger _logger;
     private readonly IConfiguration _config;
     private readonly Utils _jsonUtils;
@@ -27,10 +25,10 @@ public class HotelService : IDisposable
     
     private readonly Channel<Message> _payments;
     private readonly Channel<Message> _publish;
-    private readonly HotelHandler _hotelHandler;
+    private readonly FlightHandler _flightHandler;
 
-    private readonly HotelDbContext _writeDb;
-    private readonly HotelDbContext _readDb;
+    private readonly FlightDbContext _writeDb;
+    private readonly FlightDbContext _readDb;
     
     /// <summary>
     /// Allows tasks cancellation from the outside of the class
@@ -38,8 +36,8 @@ public class HotelService : IDisposable
     public CancellationToken Token { get; } = new();
 
     /// <summary>
-    /// Constructor of the HotelService class.
-    /// Initializes HotelService object.
+    /// Constructor of the FlightService class.
+    /// Initializes FlightService object.
     /// Creates, initializes and opens connections to the database and rabbitmq
     /// based on configuration data present and handled by specified handling objects.
     /// Throws propagated exceptions if the configuration data is nowhere to be found.
@@ -48,7 +46,7 @@ public class HotelService : IDisposable
     /// <param name="lf"> Logger factory to use by the event store </param>
     /// <exception cref="ArgumentException"> Which variable is missing in the configuration </exception>
     /// <exception cref="BrokerUnreachableException"> Couldn't establish connection with RabbitMQ </exception>
-    public HotelService(IConfiguration config, ILoggerFactory lf)
+    public FlightService(IConfiguration config, ILoggerFactory lf)
     {
         _logger = LogManager.GetCurrentClassLogger();
         _config = config;
@@ -57,17 +55,17 @@ public class HotelService : IDisposable
         _payments = Channel.CreateUnbounded<Message>(new UnboundedChannelOptions()
             { SingleReader = true, SingleWriter = true, AllowSynchronousContinuations = true });
         
-        var connStr = SecretUtils.GetConnectionString(_config, "DB_NAME_HOTEL", _logger);
-        var options = new DbContextOptions<HotelDbContext>();
-        _writeDb = new HotelDbContext(options);
-        _readDb = new HotelDbContext(options);
+        var connStr = SecretUtils.GetConnectionString(_config, "DB_NAME_FLIGHT", _logger);
+        var options = new DbContextOptions<FlightDbContext>();
+        _writeDb = new FlightDbContext(options);
+        _readDb = new FlightDbContext(options);
         
         _publish = Channel.CreateUnbounded<Message>(new UnboundedChannelOptions()
             { SingleReader = true, SingleWriter = true, AllowSynchronousContinuations = true });
         
-        _hotelHandler = new HotelHandler(_payments, _publish, _writeDb, _readDb, _logger);
+        _flightHandler = new FlightHandler(_payments, _publish, _writeDb, _readDb, _logger);
 
-        _queues = new HotelQueueHandler(_config, _logger);
+        _queues = new FlightQueueHandler(_config, _logger);
         
         _queues.AddRepliesConsumer(SagaOrdersEventHandler);
     }

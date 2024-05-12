@@ -1,6 +1,6 @@
 using NLog;
 
-namespace vgt_saga_hotel;
+namespace vgt_saga_flight;
 
 /// <summary>
 /// Utils decoding secrets from the configuration files or environmental variables

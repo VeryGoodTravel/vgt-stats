@@ -2,12 +2,12 @@
 
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
-        <RootNamespace>vgt_saga_hotel</RootNamespace>
+        <RootNamespace>vgt_saga_flight</RootNamespace>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <DocumentationFile>SagaHotelDocumentation.xml</DocumentationFile>
+        <DocumentationFile>SagaFlightDocumentation.xml</DocumentationFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -44,12 +44,12 @@
     </ItemGroup>
 
     <ItemGroup>
-        <_ContentIncludedByDefault Remove="vgt-saga-hotel\appsettings.Development.json"/>
-        <_ContentIncludedByDefault Remove="vgt-saga-hotel\appsettings.json"/>
-        <_ContentIncludedByDefault Remove="vgt-saga-hotel\obj\project.assets.json"/>
-        <_ContentIncludedByDefault Remove="vgt-saga-hotel\obj\project.packagespec.json"/>
-        <_ContentIncludedByDefault Remove="vgt-saga-hotel\obj\vgt-saga-hotel.csproj.nuget.dgspec.json"/>
-        <_ContentIncludedByDefault Remove="vgt-saga-hotel\Properties\launchSettings.json"/>
+        <_ContentIncludedByDefault Remove="vgt-saga-flight\appsettings.Development.json"/>
+        <_ContentIncludedByDefault Remove="vgt-saga-flight\appsettings.json"/>
+        <_ContentIncludedByDefault Remove="vgt-saga-flight\obj\project.assets.json"/>
+        <_ContentIncludedByDefault Remove="vgt-saga-flight\obj\project.packagespec.json"/>
+        <_ContentIncludedByDefault Remove="vgt-saga-flight\obj\vgt-saga-flight.csproj.nuget.dgspec.json"/>
+        <_ContentIncludedByDefault Remove="vgt-saga-flight\Properties\launchSettings.json"/>
     </ItemGroup>
 
 </Project>

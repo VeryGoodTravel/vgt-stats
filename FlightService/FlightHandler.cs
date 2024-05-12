@@ -1,18 +1,18 @@
 using System.Threading.Channels;
 using Microsoft.EntityFrameworkCore;
 using NLog;
-using vgt_saga_hotel.Models;
+using vgt_saga_flight.Models;
 using vgt_saga_serialization;
 using vgt_saga_serialization.MessageBodies;
 
-namespace vgt_saga_hotel.HotelService;
+namespace vgt_saga_flight.FlightService;
 
 /// <summary>
-/// Handles saga hotel requests
+/// Handles saga flight requests
 /// Creates the appropriate saga messages
 /// Handles the data in messages
 /// </summary>
-public class HotelHandler
+public class FlightHandler
 {
     /// <summary>
     /// Requests from the orchestrator
@@ -26,8 +26,8 @@ public class HotelHandler
     
     private Logger _logger;
 
-    private readonly HotelDbContext _writeDb;
-    private readonly HotelDbContext _readDb;
+    private readonly FlightDbContext _writeDb;
+    private readonly FlightDbContext _readDb;
     
     /// <summary>
     /// Task of the requests handler
@@ -45,13 +45,13 @@ public class HotelHandler
     private SemaphoreSlim _dbWriteLock = new SemaphoreSlim(1, 1);
 
     /// <summary>
-    /// Default constructor of the order handler class
-    /// that handles data and prepares messages concerning saga orders beginning, end and failure
+    /// Default constructor of the flight handler class
+    /// handles data and prepares messages concerning saga flights availibity and booking
     /// </summary>
     /// <param name="requests"> Queue with the requests from the orchestrator </param>
     /// <param name="publish"> Queue with messages that need to be published to RabbitMQ </param>
     /// <param name="log"> logger to log to </param>
-    public HotelHandler(Channel<Message> requests, Channel<Message> publish, HotelDbContext writeDb, HotelDbContext readDb, Logger log)
+    public FlightHandler(Channel<Message> requests, Channel<Message> publish, FlightDbContext writeDb, FlightDbContext readDb, Logger log)
     {
         _logger = log;
         Requests = requests;
@@ -60,11 +60,11 @@ public class HotelHandler
         _readDb = readDb;
 
         _logger.Debug("Starting tasks handling the messages");
-        RequestsTask = Task.Run(HandleHotels);
+        RequestsTask = Task.Run(HandleFlights);
         _logger.Debug("Tasks handling the messages started");
     }
 
-    private async Task HandleHotels()
+    private async Task HandleFlights()
     {
         while (await Requests.Reader.WaitToReadAsync(Token))
         {
@@ -74,23 +74,23 @@ public class HotelHandler
 
             _ = message.State switch
             {
-                SagaState.Begin => Task.Run(() => TempBookHotel(message), Token),
-                SagaState.PaymentAccept => Task.Run(() => BookHotel(message), Token),
-                SagaState.HotelFullRollback => Task.Run(() => FullRollback(message), Token),
-                SagaState.HotelTimedRollback => Task.Run(() => TempRollback(message), Token),
+                SagaState.Begin => Task.Run(() => TempBookFlight(message), Token),
+                SagaState.PaymentAccept => Task.Run(() => BookFlight(message), Token),
+                SagaState.FlightFullRollback => Task.Run(() => FullRollback(message), Token),
+                SagaState.FlightTimedRollback => Task.Run(() => TempRollback(message), Token),
                 _ => null
             };
         }
     }
 
-    private async Task TempBookHotel(Message message)
+    private async Task TempBookFlight(Message message)
     {
         if (message.MessageType != MessageType.HotelRequest || message.Body == null) return;
         var requestBody = (HotelRequest)message.Body;
         
         
         await _dbReadLock.WaitAsync(Token);
-        var available = _readDb.Bookings.Include(p => p.Room).Any(p => p.Room.Name.Equals(requestBody.RoomType) && true);
+        var available = _readDb.Bookings.Include(p => p.Flight);
         var rnd = new Random();
         await Task.Delay(rnd.Next(0, 100), Token);
         var result = rnd.Next(0, 1) switch
@@ -131,7 +131,7 @@ public class HotelHandler
         _concurencySemaphore.Release();
     }
     
-    private async Task BookHotel(Message message)
+    private async Task BookFlight(Message message)
     {
         var rnd = new Random();
         await Task.Delay(rnd.Next(0, 100), Token);

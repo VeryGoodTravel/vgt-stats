@@ -1,46 +1,46 @@
 <?xml version="1.0"?>
 <doc>
     <assembly>
-        <name>vgt-saga-hotel</name>
+        <name>vgt-saga-flight</name>
     </assembly>
     <members>
-        <member name="T:vgt_saga_hotel.HotelService.HotelHandler">
+        <member name="T:vgt_saga_flight.FlightService.FlightHandler">
             <summary>
-            Handles saga hotel requests
+            Handles saga flight requests
             Creates the appropriate saga messages
             Handles the data in messages
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.HotelService.HotelHandler.Requests">
+        <member name="P:vgt_saga_flight.FlightService.FlightHandler.Requests">
             <summary>
             Requests from the orchestrator
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.HotelService.HotelHandler.Publish">
+        <member name="P:vgt_saga_flight.FlightService.FlightHandler.Publish">
             <summary>
             Messages that need to be sent out to the queues
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.HotelService.HotelHandler.RequestsTask">
+        <member name="P:vgt_saga_flight.FlightService.FlightHandler.RequestsTask">
             <summary>
             Task of the requests handler
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.HotelService.HotelHandler.Token">
+        <member name="P:vgt_saga_flight.FlightService.FlightHandler.Token">
             <summary>
             Token allowing tasks cancellation from the outside of the class
             </summary>
         </member>
-        <member name="M:vgt_saga_hotel.HotelService.HotelHandler.#ctor(System.Threading.Channels.Channel{vgt_saga_serialization.Message},System.Threading.Channels.Channel{vgt_saga_serialization.Message},vgt_saga_hotel.Models.HotelDbContext,vgt_saga_hotel.Models.HotelDbContext,NLog.Logger)">
+        <member name="M:vgt_saga_flight.FlightService.FlightHandler.#ctor(System.Threading.Channels.Channel{vgt_saga_serialization.Message},System.Threading.Channels.Channel{vgt_saga_serialization.Message},vgt_saga_flight.Models.FlightDbContext,vgt_saga_flight.Models.FlightDbContext,NLog.Logger)">
             <summary>
-            Default constructor of the order handler class
-            that handles data and prepares messages concerning saga orders beginning, end and failure
+            Default constructor of the flight handler class
+            handles data and prepares messages concerning saga flights availibity and booking
             </summary>
             <param name="requests"> Queue with the requests from the orchestrator </param>
             <param name="publish"> Queue with messages that need to be published to RabbitMQ </param>
             <param name="log"> logger to log to </param>
         </member>
-        <member name="T:vgt_saga_hotel.HotelService.HotelQueueHandler">
+        <member name="T:vgt_saga_flight.FlightService.FlightQueueHandler">
             <summary>
             Class handling RabbitMQ connections, messages and events;
             all concerning SAGA transactions with an orchestrator.
@@ -63,7 +63,7 @@
             </p>
             </summary>
         </member>
-        <member name="M:vgt_saga_hotel.HotelService.HotelQueueHandler.#ctor(Microsoft.Extensions.Configuration.IConfiguration,NLog.Logger)">
+        <member name="M:vgt_saga_flight.FlightService.FlightQueueHandler.#ctor(Microsoft.Extensions.Configuration.IConfiguration,NLog.Logger)">
             <summary>
             Constructor of the RabbitMQ handling class.
             Initializes RabbitMQ handling object.
@@ -75,26 +75,26 @@
             <exception cref="T:System.ArgumentException"> Which variable is missing in the configuration </exception>
             <exception cref="T:RabbitMQ.Client.Exceptions.BrokerUnreachableException"> Couldn't establish connection </exception>
         </member>
-        <member name="M:vgt_saga_hotel.HotelService.HotelQueueHandler.PublishToOrchestrator(System.String)">
+        <member name="M:vgt_saga_flight.FlightService.FlightQueueHandler.PublishToOrchestrator(System.String)">
             <summary>
             Publish saga message to Orchestrator queue
             </summary>
             <param name="body"> json body of the message to send </param>
         </member>
-        <member name="M:vgt_saga_hotel.HotelService.HotelQueueHandler.PublishTagResponse(RabbitMQ.Client.Events.BasicDeliverEventArgs,System.Boolean)">
+        <member name="M:vgt_saga_flight.FlightService.FlightQueueHandler.PublishTagResponse(RabbitMQ.Client.Events.BasicDeliverEventArgs,System.Boolean)">
             <summary>
             Handles RabbitMQ message tag and posts the acceptance or rejection,
             </summary>
             <param name="ea"> tag to answer </param>
             <param name="state"> ack/reject </param>
         </member>
-        <member name="M:vgt_saga_hotel.HotelService.HotelQueueHandler.AddRepliesConsumer(System.EventHandler{RabbitMQ.Client.Events.BasicDeliverEventArgs})">
+        <member name="M:vgt_saga_flight.FlightService.FlightQueueHandler.AddRepliesConsumer(System.EventHandler{RabbitMQ.Client.Events.BasicDeliverEventArgs})">
             <summary>
             Create queue consumer and hook to the event specifying incoming requests.
             </summary>
             <param name="handler"> handler to assign to the consumer event </param>
         </member>
-        <member name="M:vgt_saga_hotel.HotelService.HotelQueueHandler.GetQueuesFromConfig(Microsoft.Extensions.Configuration.IConfiguration)">
+        <member name="M:vgt_saga_flight.FlightService.FlightQueueHandler.GetQueuesFromConfig(Microsoft.Extensions.Configuration.IConfiguration)">
             <summary>
             Get the list of all saga queues defined in the configuration.
             Logs, Creates and Throws ArgumentError if a queue name is not present.
@@ -103,7 +103,7 @@
             <returns> List of queue names </returns>
             <exception cref="T:System.ArgumentException"> Which variable is missing </exception>
         </member>
-        <member name="M:vgt_saga_hotel.HotelService.HotelQueueHandler.GetConnectionFactoryFromConfig(Microsoft.Extensions.Configuration.IConfiguration)">
+        <member name="M:vgt_saga_flight.FlightService.FlightQueueHandler.GetConnectionFactoryFromConfig(Microsoft.Extensions.Configuration.IConfiguration)">
             <summary>
             Creates connection factory to the RabbitMQ
             based on the data specified in the configuration file or env variables
@@ -112,7 +112,7 @@
             <returns> ConnectionFactory with specified connection params </returns>
             <exception cref="T:System.ArgumentException"> Which variable is missing </exception>
         </member>
-        <member name="M:vgt_saga_hotel.HotelService.HotelQueueHandler.ThrowException``1(System.String)">
+        <member name="M:vgt_saga_flight.FlightService.FlightQueueHandler.ThrowException``1(System.String)">
             <summary>
             Logs, creates and throws the exception that the specified variable is not present in the config
             </summary>
@@ -121,24 +121,24 @@
             <returns></returns>
             <exception cref="T:System.ArgumentException"> Which variable is missing </exception>
         </member>
-        <member name="M:vgt_saga_hotel.HotelService.HotelQueueHandler.Dispose">
+        <member name="M:vgt_saga_flight.FlightService.FlightQueueHandler.Dispose">
             <inheritdoc/>
         </member>
-        <member name="T:vgt_saga_hotel.HotelService.HotelService">
+        <member name="T:vgt_saga_flight.FlightService.FlightService">
             <summary>
             Saga Payment service;
             handles all payments in the transaction.
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.HotelService.HotelService.Token">
+        <member name="P:vgt_saga_flight.FlightService.FlightService.Token">
             <summary>
             Allows tasks cancellation from the outside of the class
             </summary>
         </member>
-        <member name="M:vgt_saga_hotel.HotelService.HotelService.#ctor(Microsoft.Extensions.Configuration.IConfiguration,Microsoft.Extensions.Logging.ILoggerFactory)">
+        <member name="M:vgt_saga_flight.FlightService.FlightService.#ctor(Microsoft.Extensions.Configuration.IConfiguration,Microsoft.Extensions.Logging.ILoggerFactory)">
             <summary>
-            Constructor of the HotelService class.
-            Initializes HotelService object.
+            Constructor of the FlightService class.
+            Initializes FlightService object.
             Creates, initializes and opens connections to the database and rabbitmq
             based on configuration data present and handled by specified handling objects.
             Throws propagated exceptions if the configuration data is nowhere to be found.
@@ -148,12 +148,12 @@
             <exception cref="T:System.ArgumentException"> Which variable is missing in the configuration </exception>
             <exception cref="T:RabbitMQ.Client.Exceptions.BrokerUnreachableException"> Couldn't establish connection with RabbitMQ </exception>
         </member>
-        <member name="M:vgt_saga_hotel.HotelService.HotelService.RabbitPublisher">
+        <member name="M:vgt_saga_flight.FlightService.FlightService.RabbitPublisher">
             <summary>
             Publishes made messages to the right queues
             </summary>
         </member>
-        <member name="M:vgt_saga_hotel.HotelService.HotelService.SagaOrdersEventHandler(System.Object,RabbitMQ.Client.Events.BasicDeliverEventArgs)">
+        <member name="M:vgt_saga_flight.FlightService.FlightService.SagaOrdersEventHandler(System.Object,RabbitMQ.Client.Events.BasicDeliverEventArgs)">
             <summary>
             Event Handler that hooks to the event of the queue consumer.
             Handles incoming replies from the RabbitMQ and routes them to the appropriate tasks.
@@ -161,298 +161,238 @@
             <param name="sender"></param>
             <param name="ea"></param>
         </member>
-        <member name="M:vgt_saga_hotel.HotelService.HotelService.Dispose">
+        <member name="M:vgt_saga_flight.FlightService.FlightService.Dispose">
             <inheritdoc/>
         </member>
-        <member name="T:vgt_saga_hotel.Migrations.Initial">
+        <member name="T:vgt_saga_flight.Migrations.Initial">
             <inheritdoc />
         </member>
-        <member name="M:vgt_saga_hotel.Migrations.Initial.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+        <member name="M:vgt_saga_flight.Migrations.Initial.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
             <inheritdoc />
         </member>
-        <member name="M:vgt_saga_hotel.Migrations.Initial.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+        <member name="M:vgt_saga_flight.Migrations.Initial.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
             <inheritdoc />
         </member>
-        <member name="M:vgt_saga_hotel.Migrations.Initial.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+        <member name="M:vgt_saga_flight.Migrations.Initial.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
-        <member name="T:vgt_saga_hotel.Models.HotelDbContext">
+        <member name="T:vgt_saga_flight.Models.FlightDbContext">
             <inheritdoc />
         </member>
-        <member name="P:vgt_saga_hotel.Models.HotelDbContext.Hotels">
+        <member name="P:vgt_saga_flight.Models.FlightDbContext.Airports">
             <summary>
-            Set of Database Hotel entities mapped to HotelDb objects
+            Set of Database Airports entities mapped to AirportDb objects
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.Models.HotelDbContext.Rooms">
+        <member name="P:vgt_saga_flight.Models.FlightDbContext.Flights">
             <summary>
-            Set of Database Room entities mapped to RoomDb objects
+            Set of Database Flight entities mapped to FlightDb objects
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.Models.HotelDbContext.Bookings">
+        <member name="P:vgt_saga_flight.Models.FlightDbContext.Bookings">
             <summary>
             Set of Database Booking entities mapped to Booking objects
             </summary>
         </member>
-        <member name="M:vgt_saga_hotel.Models.HotelDbContext.#ctor(Microsoft.EntityFrameworkCore.DbContextOptions{vgt_saga_hotel.Models.HotelDbContext})">
+        <member name="M:vgt_saga_flight.Models.FlightDbContext.#ctor(Microsoft.EntityFrameworkCore.DbContextOptions{vgt_saga_flight.Models.FlightDbContext})">
             <inheritdoc />
         </member>
-        <member name="T:vgt_saga_hotel.Models.Booking">
+        <member name="T:vgt_saga_flight.Models.Booking">
             <summary>
             Booking object representing an object from the database
             </summary>
         </member>
-        <member name="M:vgt_saga_hotel.Models.Booking.#ctor">
+        <member name="M:vgt_saga_flight.Models.Booking.#ctor">
             <summary>
             Booking object representing an object from the database
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.Models.Booking.Hotel">
+        <member name="P:vgt_saga_flight.Models.Booking.Flight">
             <summary>
-            Hotel the booking concerns
+            Flight booked
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.Models.Booking.Room">
-            <summary>
-            Room booked
-            </summary>
-        </member>
-        <member name="P:vgt_saga_hotel.Models.Booking.TransactionId">
+        <member name="P:vgt_saga_flight.Models.Booking.TransactionId">
             <summary>
             Guid of the transaction that requested this booking
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.Models.Booking.Temporary">
+        <member name="P:vgt_saga_flight.Models.Booking.Temporary">
             <summary>
             If the booking is temporary
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.Models.Booking.TemporaryDt">
+        <member name="P:vgt_saga_flight.Models.Booking.TemporaryDt">
             <summary>
             Time of the temporary booking
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.Models.Booking.BookFrom">
+        <member name="T:vgt_saga_flight.Models.FlightDb">
             <summary>
-            Time the rooms are booked from
+            Flight type object representing an object from the database
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.Models.Booking.BookTo">
+        <member name="M:vgt_saga_flight.Models.FlightDb.#ctor">
             <summary>
-            Time the rooms are booked to
+            Flight type object representing an object from the database
             </summary>
         </member>
-        <member name="T:vgt_saga_hotel.Models.RoomDb">
+        <member name="P:vgt_saga_flight.Models.FlightDb.Amount">
             <summary>
-            Room type object representing an object from the database
+            Amount of the seats offered by the flight
             </summary>
         </member>
-        <member name="M:vgt_saga_hotel.Models.RoomDb.#ctor">
+        <member name="P:vgt_saga_flight.Models.FlightDb.FlightTime">
             <summary>
-            Room type object representing an object from the database
+            Time the flight takes place
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.Models.RoomDb.Amount">
+        <member name="P:vgt_saga_flight.Models.FlightDb.ArrivalAirport">
             <summary>
-            Amount of the rooms offered by the hotel
+            Arrival Airport the flight lands on
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.Models.RoomDb.Name">
+        <member name="P:vgt_saga_flight.Models.FlightDb.DepartureAirport">
             <summary>
-            Name of the room
+            Departure Airport the flight starts from
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.Models.RoomDb.MinPeople">
+        <member name="T:vgt_saga_flight.Models.AirportDb">
             <summary>
-            Minimal amount of people required to rent this room
+            Flight object representing an object from the database
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.Models.RoomDb.MaxPeople">
+        <member name="M:vgt_saga_flight.Models.AirportDb.#ctor">
             <summary>
-            Maximal amount of people allowed to rent this room
+            Flight object representing an object from the database
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.Models.RoomDb.MinAdults">
+        <member name="P:vgt_saga_flight.Models.AirportDb.AirportCode">
             <summary>
-            Minimal amount of adults required to rent this room
+            Code of the airport from scrapper
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.Models.RoomDb.MaxAdults">
+        <member name="P:vgt_saga_flight.Models.AirportDb.AirportCity">
             <summary>
-            Maximal amount of adults allowed to rent this room
+            City the airport is in
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.Models.RoomDb.MinChildren">
+        <member name="P:vgt_saga_flight.Models.AirportDb.IsDeparture">
             <summary>
-            18 y.o. children min count in a room
+            if the airport is a departure airport definition
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.Models.RoomDb.MaxChildren">
-            <summary>
-            18 y.o. children max count in a room
-            </summary>
-        </member>
-        <member name="P:vgt_saga_hotel.Models.RoomDb.Max10yo">
-            <summary>
-            Maximal amount of 10 y.o. children allowed to rent this room
-            </summary>
-        </member>
-        <member name="P:vgt_saga_hotel.Models.RoomDb.MaxLesserChildren">
-            <summary>
-            Maximal amount of children younger than 3 y.o. allowed to rent this room
-            </summary>
-        </member>
-        <member name="T:vgt_saga_hotel.Models.HotelDb">
-            <summary>
-            Hotel object representing an object from the database
-            </summary>
-        </member>
-        <member name="M:vgt_saga_hotel.Models.HotelDb.#ctor">
-            <summary>
-            Hotel object representing an object from the database
-            </summary>
-        </member>
-        <member name="P:vgt_saga_hotel.Models.HotelDb.Name">
-            <summary>
-            Name of the hotel from scrapper
-            </summary>
-        </member>
-        <member name="P:vgt_saga_hotel.Models.HotelDb.Country">
-            <summary>
-            Country the hotel is in
-            </summary>
-        </member>
-        <member name="P:vgt_saga_hotel.Models.HotelDb.City">
-            <summary>
-            City the hotel is assigned to
-            </summary>
-        </member>
-        <member name="P:vgt_saga_hotel.Models.HotelDb.AirportCode">
-            <summary>
-            Code of the airport assigned to the hotel
-            </summary>
-        </member>
-        <member name="P:vgt_saga_hotel.Models.HotelDb.AirportName">
-            <summary>
-            Name of the airport assigned to the hotel
-            </summary>
-        </member>
-        <member name="P:vgt_saga_hotel.Models.HotelDb.Rooms">
-            <summary>
-            List of room types available in the hotel
-            </summary>
-        </member>
-        <member name="T:vgt_saga_hotel.Models.Airport">
+        <member name="T:vgt_saga_flight.Models.Airport">
             <summary>
             Represents data from scrapper's json concerning airports 
             </summary>
         </member>
-        <member name="M:vgt_saga_hotel.Models.Airport.#ctor">
+        <member name="M:vgt_saga_flight.Models.Airport.#ctor">
             <summary>
             Represents data from scrapper's json concerning airports 
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.Models.Airport.Code">
+        <member name="P:vgt_saga_flight.Models.Airport.Code">
             <summary>
             Code of the airport
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.Models.Airport.Name">
+        <member name="P:vgt_saga_flight.Models.Airport.Name">
             <summary>
             Name of the airport
             </summary>
         </member>
-        <member name="T:vgt_saga_hotel.Models.Range">
+        <member name="T:vgt_saga_flight.Models.Range">
             <summary>
             Represents data from scrapper's json concerning amounts of people required and allowed in the rooms 
             </summary>
         </member>
-        <member name="M:vgt_saga_hotel.Models.Range.#ctor">
+        <member name="M:vgt_saga_flight.Models.Range.#ctor">
             <summary>
             Represents data from scrapper's json concerning amounts of people required and allowed in the rooms 
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.Models.Range.Min">
+        <member name="P:vgt_saga_flight.Models.Range.Min">
             <summary>
             Minimal amount of people required to rent the room
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.Models.Range.Max">
+        <member name="P:vgt_saga_flight.Models.Range.Max">
             <summary>
             Maximal amount of people allowed in the room
             </summary>
         </member>
-        <member name="T:vgt_saga_hotel.Models.Room">
+        <member name="T:vgt_saga_flight.Models.Room">
             <summary>
-            Represents data from scrapper's json concerning Rooms in the hotels 
+            Represents data from scrapper's json concerning Flights in the hotels 
             </summary>
         </member>
-        <member name="M:vgt_saga_hotel.Models.Room.#ctor">
+        <member name="M:vgt_saga_flight.Models.Room.#ctor">
             <summary>
-            Represents data from scrapper's json concerning Rooms in the hotels 
+            Represents data from scrapper's json concerning Flights in the hotels 
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.Models.Room.Name">
+        <member name="P:vgt_saga_flight.Models.Room.Name">
             <summary>
             Name of the room type
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.Models.Room.People">
+        <member name="P:vgt_saga_flight.Models.Room.People">
             <summary>
             Ranges of people amounts
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.Models.Room.Adults">
+        <member name="P:vgt_saga_flight.Models.Room.Adults">
             <summary>
             Ranges of adults amounts
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.Models.Room.Children">
+        <member name="P:vgt_saga_flight.Models.Room.Children">
             <summary>
             Ranges of children amounts
             </summary>
         </member>
-        <member name="T:vgt_saga_hotel.Models.Hotel">
+        <member name="T:vgt_saga_flight.Models.Hotel">
             <summary>
-            Represents data from scrapper's json concerning Hotels 
+            Represents data from scrapper's json concerning Airports 
             </summary>
         </member>
-        <member name="M:vgt_saga_hotel.Models.Hotel.#ctor">
+        <member name="M:vgt_saga_flight.Models.Hotel.#ctor">
             <summary>
-            Represents data from scrapper's json concerning Hotels 
+            Represents data from scrapper's json concerning Airports 
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.Models.Hotel.Name">
+        <member name="P:vgt_saga_flight.Models.Hotel.Name">
             <summary>
             Name of the hotel
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.Models.Hotel.Country">
+        <member name="P:vgt_saga_flight.Models.Hotel.Country">
             <summary>
             Country the hotel is in
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.Models.Hotel.City">
+        <member name="P:vgt_saga_flight.Models.Hotel.City">
             <summary>
             City the hotel is assigned to
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.Models.Hotel.Airport">
+        <member name="P:vgt_saga_flight.Models.Hotel.Airport">
             <summary>
             Airport the hotel is assigned to
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.Models.Hotel.Rooms">
+        <member name="P:vgt_saga_flight.Models.Hotel.Rooms">
             <summary>
             List of room types offered by the hotel and their amounts
             </summary>
         </member>
-        <member name="T:vgt_saga_hotel.SecretUtils">
+        <member name="T:vgt_saga_flight.SecretUtils">
             <summary>
             Utils decoding secrets from the configuration files or environmental variables
             </summary>
         </member>
-        <member name="M:vgt_saga_hotel.SecretUtils.GetConnectionString(Microsoft.Extensions.Configuration.IConfiguration,System.String,NLog.Logger)">
+        <member name="M:vgt_saga_flight.SecretUtils.GetConnectionString(Microsoft.Extensions.Configuration.IConfiguration,System.String,NLog.Logger)">
             <summary>
             Gets SQL connection data from the configuration and merges that data into the connection string
             </summary>
@@ -462,7 +402,7 @@
             <returns> Merged connection string </returns>
             <exception cref="T:System.ArgumentException"> Thrown if configuration param was not found </exception>
         </member>
-        <member name="M:vgt_saga_hotel.SecretUtils.ThrowException``1(System.String,NLog.Logger)">
+        <member name="M:vgt_saga_flight.SecretUtils.ThrowException``1(System.String,NLog.Logger)">
             <summary>
             Logs, creates and throws the exception that the specified variable is not present in the config
             </summary>

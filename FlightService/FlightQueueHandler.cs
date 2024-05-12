@@ -4,7 +4,7 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
 
-namespace vgt_saga_hotel.HotelService;
+namespace vgt_saga_flight.FlightService;
 
 /// <summary>
 /// Class handling RabbitMQ connections, messages and events;
@@ -27,7 +27,7 @@ namespace vgt_saga_hotel.HotelService;
 /// </list>
 /// </p>
 /// </summary>
-public class HotelQueueHandler : IDisposable
+public class FlightQueueHandler : IDisposable
 {
     private const string LoggerPrefix = "OrderQueue| ";
     private readonly ConnectionFactory _factory;
@@ -53,7 +53,7 @@ public class HotelQueueHandler : IDisposable
     /// <param name="log"> logger to log to </param>
     /// <exception cref="ArgumentException"> Which variable is missing in the configuration </exception>
     /// <exception cref="BrokerUnreachableException"> Couldn't establish connection </exception>
-    public HotelQueueHandler(IConfiguration config, Logger log)
+    public FlightQueueHandler(IConfiguration config, Logger log)
     {
         _logger = log;
         _logger.Debug("{p}Initializing RabbitMq connections", LoggerPrefix);
@@ -135,9 +135,9 @@ public class HotelQueueHandler : IDisposable
             string.IsNullOrEmpty(config.GetValue<string?>("RABBIT_REPLIES"))
                 ? ThrowException<string>("RABBIT_REPLIES")
                 : config.GetValue<string?>("RABBIT_REPLIES")!,
-            string.IsNullOrEmpty(config.GetValue<string?>("RABBIT_PAYMENT"))
-                ? ThrowException<string>("RABBIT_PAYMENT")
-                : config.GetValue<string?>("RABBIT_PAYMENT")!,
+            string.IsNullOrEmpty(config.GetValue<string?>("RABBIT_FLIGHT"))
+                ? ThrowException<string>("RABBIT_FLIGHT")
+                : config.GetValue<string?>("RABBIT_FLIGHT")!,
         };
 
         return result;

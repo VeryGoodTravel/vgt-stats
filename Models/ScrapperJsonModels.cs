@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace vgt_saga_hotel.Models;
+namespace vgt_saga_flight.Models;
 
 /// <summary>
 /// Represents data from scrapper's json concerning airports 
@@ -39,7 +39,7 @@ public record struct Range()
 };
 
 /// <summary>
-/// Represents data from scrapper's json concerning Rooms in the hotels 
+/// Represents data from scrapper's json concerning Flights in the hotels 
 /// </summary>
 public record struct Room()
 {
@@ -69,7 +69,7 @@ public record struct Room()
 };
 
 /// <summary>
-/// Represents data from scrapper's json concerning Hotels 
+/// Represents data from scrapper's json concerning Airports 
 /// </summary>
 public record struct Hotel()
 {
