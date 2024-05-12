@@ -42,9 +42,14 @@ public class Booking()
     public HotelDb Hotel { get; set; } = new();
 
     /// <summary>
-    /// List of rooms booked
+    /// Room booked
     /// </summary>
-    public List<RoomDb> Room { get; set; } = [];
+    public RoomDb Room { get; set; } = new();
+    
+    /// <summary>
+    /// Guid of the transaction that requested this booking
+    /// </summary>
+    public Guid TransactionId { get; set; }
     
     /// <summary>
     /// If the booking is temporary

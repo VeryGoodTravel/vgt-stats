@@ -1,8 +1,9 @@
 using System.Threading.Channels;
-using NEventStore;
+using Microsoft.EntityFrameworkCore;
 using NLog;
-using vgt_saga_hotel.vgt_saga_serialization;
-using vgt_saga_hotel.vgt_saga_serialization.MessageBodies;
+using vgt_saga_hotel.Models;
+using vgt_saga_serialization;
+using vgt_saga_serialization.MessageBodies;
 
 namespace vgt_saga_hotel.HotelService;
 
@@ -24,8 +25,9 @@ public class HotelHandler
     public Channel<Message> Publish { get; }
     
     private Logger _logger;
-    
-    private IStoreEvents EventStore { get; }
+
+    private readonly HotelDbContext _writeDb;
+    private readonly HotelDbContext _readDb;
     
     /// <summary>
     /// Task of the requests handler
@@ -38,6 +40,9 @@ public class HotelHandler
     public CancellationToken Token { get; } = new();
     
     private SemaphoreSlim _concurencySemaphore = new SemaphoreSlim(6, 6);
+    
+    private SemaphoreSlim _dbReadLock = new SemaphoreSlim(1, 1);
+    private SemaphoreSlim _dbWriteLock = new SemaphoreSlim(1, 1);
 
     /// <summary>
     /// Default constructor of the order handler class
@@ -45,14 +50,14 @@ public class HotelHandler
     /// </summary>
     /// <param name="requests"> Queue with the requests from the orchestrator </param>
     /// <param name="publish"> Queue with messages that need to be published to RabbitMQ </param>
-    /// <param name="eventStore"> EventStore for the event sourcing and CQRS </param>
     /// <param name="log"> logger to log to </param>
-    public HotelHandler(Channel<Message> requests, Channel<Message> publish, IStoreEvents eventStore, Logger log)
+    public HotelHandler(Channel<Message> requests, Channel<Message> publish, HotelDbContext writeDb, HotelDbContext readDb, Logger log)
     {
         _logger = log;
         Requests = requests;
         Publish = publish;
-        EventStore = eventStore;
+        _writeDb = writeDb;
+        _readDb = readDb;
 
         _logger.Debug("Starting tasks handling the messages");
         RequestsTask = Task.Run(HandleHotels);
@@ -80,6 +85,12 @@ public class HotelHandler
 
     private async Task TempBookHotel(Message message)
     {
+        if (message.MessageType != MessageType.HotelRequest || message.Body == null) return;
+        var requestBody = (HotelRequest)message.Body;
+        
+        
+        await _dbReadLock.WaitAsync(Token);
+        var available = _readDb.Bookings.Include(p => p.Room).Any(p => p.Room.Name.Equals(requestBody.RoomType) && true);
         var rnd = new Random();
         await Task.Delay(rnd.Next(0, 100), Token);
         var result = rnd.Next(0, 1) switch

@@ -7,7 +7,8 @@ using NLog;
 using Npgsql;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
-using vgt_saga_hotel.vgt_saga_serialization;
+using vgt_saga_hotel.Models;
+using vgt_saga_serialization;
 
 namespace vgt_saga_hotel.HotelService;
 
@@ -26,6 +27,9 @@ public class HotelService : IDisposable
     private readonly Channel<Message> _payments;
     private readonly Channel<Message> _publish;
     private readonly HotelHandler _hotelHandler;
+
+    private readonly HotelDbContext _writeDb;
+    private readonly HotelDbContext _readDb;
     
     /// <summary>
     /// Allows tasks cancellation from the outside of the class
@@ -53,20 +57,14 @@ public class HotelService : IDisposable
             { SingleReader = true, SingleWriter = true, AllowSynchronousContinuations = true });
         
         var connStr = SecretUtils.GetConnectionString(_config, "DB_NAME_HOTEL", _logger);
-        
-        _eventStore = Wireup.Init()
-            .WithLoggerFactory(lf)
-            .UsingInMemoryPersistence()
-            .UsingSqlPersistence(NpgsqlFactory.Instance, connStr)
-            .InitializeStorageEngine()
-            .UsingJsonSerialization()
-            .Compress()
-            .Build();
+
+        _writeDb = new HotelDbContext(connStr);
+        _readDb = new HotelDbContext(connStr);
 
         _publish = Channel.CreateUnbounded<Message>(new UnboundedChannelOptions()
             { SingleReader = true, SingleWriter = true, AllowSynchronousContinuations = true });
         
-        _hotelHandler = new HotelHandler(_payments, _publish, _eventStore, _logger);
+        _hotelHandler = new HotelHandler(_payments, _publish, _writeDb, _readDb, _logger);
 
         _queues = new HotelQueueHandler(_config, _logger);
         
