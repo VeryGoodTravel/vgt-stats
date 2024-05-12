@@ -21,16 +21,6 @@
             Messages that need to be sent out to the queues
             </summary>
         </member>
-        <member name="P:vgt_saga_hotel.HotelService.HotelHandler.CurrentRequest">
-            <summary>
-            current request handled
-            </summary>
-        </member>
-        <member name="P:vgt_saga_hotel.HotelService.HotelHandler.CurrentReply">
-            <summary>
-            current reply handled
-            </summary>
-        </member>
         <member name="P:vgt_saga_hotel.HotelService.HotelHandler.RequestsTask">
             <summary>
             Task of the requests handler
@@ -174,6 +164,275 @@
         </member>
         <member name="M:vgt_saga_hotel.HotelService.HotelService.Dispose">
             <inheritdoc/>
+        </member>
+        <member name="T:vgt_saga_hotel.Models.HotelDbContext">
+            <inheritdoc />
+        </member>
+        <member name="P:vgt_saga_hotel.Models.HotelDbContext.Hotels">
+            <summary>
+            Set of Database Hotel entities mapped to HotelDb objects
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.HotelDbContext.Rooms">
+            <summary>
+            Set of Database Room entities mapped to RoomDb objects
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.HotelDbContext.Bookings">
+            <summary>
+            Set of Database Booking entities mapped to Booking objects
+            </summary>
+        </member>
+        <member name="M:vgt_saga_hotel.Models.HotelDbContext.#ctor(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:vgt_saga_hotel.Models.HotelDbContext.OnConfiguring(Microsoft.EntityFrameworkCore.DbContextOptionsBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:vgt_saga_hotel.Models.Booking">
+            <summary>
+            Booking object representing an object from the database
+            </summary>
+        </member>
+        <member name="M:vgt_saga_hotel.Models.Booking.#ctor">
+            <summary>
+            Booking object representing an object from the database
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.Booking.Hotel">
+            <summary>
+            Hotel the booking concerns
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.Booking.Room">
+            <summary>
+            List of rooms booked
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.Booking.Temporary">
+            <summary>
+            If the booking is temporary
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.Booking.TemporaryDt">
+            <summary>
+            Time of the temporary booking
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.Booking.BookFrom">
+            <summary>
+            Time the rooms are booked from
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.Booking.BookTo">
+            <summary>
+            Time the rooms are booked to
+            </summary>
+        </member>
+        <member name="T:vgt_saga_hotel.Models.RoomDb">
+            <summary>
+            Room type object representing an object from the database
+            </summary>
+        </member>
+        <member name="M:vgt_saga_hotel.Models.RoomDb.#ctor">
+            <summary>
+            Room type object representing an object from the database
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.RoomDb.Amount">
+            <summary>
+            Amount of the rooms offered by the hotel
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.RoomDb.Name">
+            <summary>
+            Name of the room
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.RoomDb.MinPeople">
+            <summary>
+            Minimal amount of people required to rent this room
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.RoomDb.MaxPeople">
+            <summary>
+            Maximal amount of people allowed to rent this room
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.RoomDb.MinAdults">
+            <summary>
+            Minimal amount of adults required to rent this room
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.RoomDb.MaxAdults">
+            <summary>
+            Maximal amount of adults allowed to rent this room
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.RoomDb.MinChildren">
+            <summary>
+            18 y.o. children min count in a room
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.RoomDb.MaxChildren">
+            <summary>
+            18 y.o. children max count in a room
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.RoomDb.Max10yo">
+            <summary>
+            Maximal amount of 10 y.o. children allowed to rent this room
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.RoomDb.MaxLesserChildren">
+            <summary>
+            Maximal amount of children younger than 3 y.o. allowed to rent this room
+            </summary>
+        </member>
+        <member name="T:vgt_saga_hotel.Models.HotelDb">
+            <summary>
+            Hotel object representing an object from the database
+            </summary>
+        </member>
+        <member name="M:vgt_saga_hotel.Models.HotelDb.#ctor">
+            <summary>
+            Hotel object representing an object from the database
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.HotelDb.Name">
+            <summary>
+            Name of the hotel from scrapper
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.HotelDb.Country">
+            <summary>
+            Country the hotel is in
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.HotelDb.City">
+            <summary>
+            City the hotel is assigned to
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.HotelDb.AirportCode">
+            <summary>
+            Code of the airport assigned to the hotel
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.HotelDb.AirportName">
+            <summary>
+            Name of the airport assigned to the hotel
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.HotelDb.Rooms">
+            <summary>
+            List of room types available in the hotel
+            </summary>
+        </member>
+        <member name="T:vgt_saga_hotel.Models.Airport">
+            <summary>
+            Represents data from scrapper's json concerning airports 
+            </summary>
+        </member>
+        <member name="M:vgt_saga_hotel.Models.Airport.#ctor">
+            <summary>
+            Represents data from scrapper's json concerning airports 
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.Airport.Code">
+            <summary>
+            Code of the airport
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.Airport.Name">
+            <summary>
+            Name of the airport
+            </summary>
+        </member>
+        <member name="T:vgt_saga_hotel.Models.Range">
+            <summary>
+            Represents data from scrapper's json concerning amounts of people required and allowed in the rooms 
+            </summary>
+        </member>
+        <member name="M:vgt_saga_hotel.Models.Range.#ctor">
+            <summary>
+            Represents data from scrapper's json concerning amounts of people required and allowed in the rooms 
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.Range.Min">
+            <summary>
+            Minimal amount of people required to rent the room
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.Range.Max">
+            <summary>
+            Maximal amount of people allowed in the room
+            </summary>
+        </member>
+        <member name="T:vgt_saga_hotel.Models.Room">
+            <summary>
+            Represents data from scrapper's json concerning Rooms in the hotels 
+            </summary>
+        </member>
+        <member name="M:vgt_saga_hotel.Models.Room.#ctor">
+            <summary>
+            Represents data from scrapper's json concerning Rooms in the hotels 
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.Room.Name">
+            <summary>
+            Name of the room type
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.Room.People">
+            <summary>
+            Ranges of people amounts
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.Room.Adults">
+            <summary>
+            Ranges of adults amounts
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.Room.Children">
+            <summary>
+            Ranges of children amounts
+            </summary>
+        </member>
+        <member name="T:vgt_saga_hotel.Models.Hotel">
+            <summary>
+            Represents data from scrapper's json concerning Hotels 
+            </summary>
+        </member>
+        <member name="M:vgt_saga_hotel.Models.Hotel.#ctor">
+            <summary>
+            Represents data from scrapper's json concerning Hotels 
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.Hotel.Name">
+            <summary>
+            Name of the hotel
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.Hotel.Country">
+            <summary>
+            Country the hotel is in
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.Hotel.City">
+            <summary>
+            City the hotel is assigned to
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.Hotel.Airport">
+            <summary>
+            Airport the hotel is assigned to
+            </summary>
+        </member>
+        <member name="P:vgt_saga_hotel.Models.Hotel.Rooms">
+            <summary>
+            List of room types offered by the hotel and their amounts
+            </summary>
         </member>
         <member name="T:vgt_saga_hotel.SecretUtils">
             <summary>

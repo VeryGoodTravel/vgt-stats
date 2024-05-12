@@ -23,15 +23,6 @@ public class HotelHandler
     /// </summary>
     public Channel<Message> Publish { get; }
     
-    /// <summary>
-    /// current request handled
-    /// </summary>
-    public Message CurrentRequest { get; set; }
-    
-    /// <summary>
-    /// current reply handled
-    /// </summary>
-    public Message CurrentReply { get; set; }
     private Logger _logger;
     
     private IStoreEvents EventStore { get; }
@@ -103,7 +94,7 @@ public class HotelHandler
         message.Body = new PaymentReply();
         message.CreationDate = DateTime.Now;
         
-        await Publish.Writer.WriteAsync(CurrentRequest, Token);
+        await Publish.Writer.WriteAsync(message, Token);
         
         _concurencySemaphore.Release();
     }
@@ -124,7 +115,7 @@ public class HotelHandler
         message.Body = new PaymentReply();
         message.CreationDate = DateTime.Now;
         
-        await Publish.Writer.WriteAsync(CurrentRequest, Token);
+        await Publish.Writer.WriteAsync(message, Token);
         
         _concurencySemaphore.Release();
     }
@@ -145,7 +136,7 @@ public class HotelHandler
         message.Body = new PaymentReply();
         message.CreationDate = DateTime.Now;
         
-        await Publish.Writer.WriteAsync(CurrentRequest, Token);
+        await Publish.Writer.WriteAsync(message, Token);
         
         _concurencySemaphore.Release();
     }
@@ -166,7 +157,7 @@ public class HotelHandler
         message.Body = new PaymentReply();
         message.CreationDate = DateTime.Now;
         
-        await Publish.Writer.WriteAsync(CurrentRequest, Token);
+        await Publish.Writer.WriteAsync(message, Token);
         
         _concurencySemaphore.Release();
     }

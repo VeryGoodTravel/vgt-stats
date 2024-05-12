@@ -1,6 +1,8 @@
 using System.Threading.Channels;
 using NEventStore;
 using NEventStore.Serialization.Json;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NLog;
 using Npgsql;
 using RabbitMQ.Client.Events;
@@ -50,7 +52,7 @@ public class HotelService : IDisposable
         _payments = Channel.CreateUnbounded<Message>(new UnboundedChannelOptions()
             { SingleReader = true, SingleWriter = true, AllowSynchronousContinuations = true });
         
-        var connStr = SecretUtils.GetConnectionString(_config, "DB_NAME_PAYM", _logger);
+        var connStr = SecretUtils.GetConnectionString(_config, "DB_NAME_HOTEL", _logger);
         
         _eventStore = Wireup.Init()
             .WithLoggerFactory(lf)
@@ -69,6 +71,18 @@ public class HotelService : IDisposable
         _queues = new HotelQueueHandler(_config, _logger);
         
         _queues.AddRepliesConsumer(SagaOrdersEventHandler);
+    }
+
+    private void Initialize()
+    {
+        JObject o1 = JObject.Parse(File.ReadAllText(@"c:\videogames.json"));
+
+        // read JSON directly from a file
+        using (StreamReader file = File.OpenText(@"c:\videogames.json"))
+        using (JsonTextReader reader = new JsonTextReader(file))
+        {
+            JObject o2 = (JObject) JToken.ReadFrom(reader);
+        }
     }
 
     /// <summary>

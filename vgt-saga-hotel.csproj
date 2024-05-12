@@ -12,6 +12,10 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.4"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.4">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="NEventStore" Version="9.1.1" />
         <PackageReference Include="NEventStore.Persistence.Sql" Version="9.2.0" />
         <PackageReference Include="NEventStore.Serialization.Json" Version="9.1.1" />

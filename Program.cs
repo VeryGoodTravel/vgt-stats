@@ -55,19 +55,19 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-HotelService? paymentService = null;
+HotelService? hotelService = null;
 
 try
 {
-    paymentService = new HotelService(app.Configuration, lf);
+    hotelService = new HotelService(app.Configuration, lf);
 }
 catch (BrokerUnreachableException)
 {
-    GracefulExit(app, logger, [paymentService]);
+    GracefulExit(app, logger, [hotelService]);
 }
 catch (ArgumentException)
 {
-    GracefulExit(app, logger, [paymentService]);
+    GracefulExit(app, logger, [hotelService]);
 }
 
 var summaries = new[]
