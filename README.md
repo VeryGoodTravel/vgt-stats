@@ -7,17 +7,6 @@ temporarily books flights or fully books them depending on the SAGA transaction 
 
 Creates travel destinations information and available flights with the data provided by the scrapper.
 
-## Data storage (PostgreSQL)
-
-Follows CQRS.
-
-Database consists of the 3 main tables:
- - AirportDb -> contains information about each Airport defined with the foreign key of flights offered by the airport,
- - FlightDb -> contains definition of the flights offered with their respectful amount of seats available,
- - Booking -> Defines booked flight seats. Specifies if the booking is temporary with the DateTime of the temporary booking and the time the booking takes place. Is assigned to a flight.
-
-![Database schema](DB_FLIGHT.png)
-
 ## Repository
 
 This repository contains additional submodules containing shared libraries of the SAGA microservices implementations.
@@ -45,3 +34,14 @@ To update those submodules in the local branch run:
 ## Implementation documentation
 XML docs of the project available in the repository in the
 file [SagaFlightDocumentation.xml](SagaFlightDocumentation.xml)
+
+## Data storage (PostgreSQL)
+
+Follows CQRS.
+
+Database consists of the 3 main tables:
+ - AirportDb -> contains information about each Airport defined with the foreign key of flights offered by the airport,
+ - FlightDb -> contains definition of the flights offered with their respectful amount of seats available,
+ - Booking -> Defines booked flight seats. Specifies if the booking is temporary with the DateTime of the temporary booking and the time the booking takes place. Is assigned to a flight.
+
+![Database schema](DB_FLIGHT.png)
