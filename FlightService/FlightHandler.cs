@@ -76,7 +76,6 @@ public class FlightHandler
             {
                 SagaState.Begin => Task.Run(() => TempBookFlight(message), Token),
                 SagaState.PaymentAccept => Task.Run(() => BookFlight(message), Token),
-                SagaState.FlightFullRollback => Task.Run(() => FullRollback(message), Token),
                 SagaState.FlightTimedRollback => Task.Run(() => TempRollback(message), Token),
                 _ => null
             };
@@ -132,27 +131,6 @@ public class FlightHandler
     }
     
     private async Task BookFlight(Message message)
-    {
-        var rnd = new Random();
-        await Task.Delay(rnd.Next(0, 100), Token);
-        var result = rnd.Next(0, 1) switch
-        {
-            1 => SagaState.PaymentAccept,
-            _ => SagaState.PaymentFailed
-        };
-        
-        message.MessageType = MessageType.PaymentReply;
-        message.MessageId += 1;
-        message.State = result;
-        message.Body = new PaymentReply();
-        message.CreationDate = DateTime.Now;
-        
-        await Publish.Writer.WriteAsync(message, Token);
-        
-        _concurencySemaphore.Release();
-    }
-    
-    private async Task FullRollback(Message message)
     {
         var rnd = new Random();
         await Task.Delay(rnd.Next(0, 100), Token);
