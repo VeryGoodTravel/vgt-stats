@@ -61,6 +61,8 @@ public class Booking()
     /// Time of the temporary booking
     /// </summary>
     public DateTime TemporaryDt { get; set; }
+    
+    public int Amount { get; set; }
 }
 
 /// <summary>
@@ -69,6 +71,9 @@ public class Booking()
 public class FlightDb()
 {
     public int FlightDbId { get; set; }
+    
+    
+    public int Price { get; set; }
     
     /// <summary>
     /// Amount of the seats offered by the flight

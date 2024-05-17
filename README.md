@@ -1,4 +1,4 @@
-# vgt-saga-hotel
+# vgt-saga-flight
 
 Main repository of the Flight service.
 

@@ -60,6 +60,11 @@ public class FlightService : IDisposable
         _writeDb = new FlightDbContext(options);
         _readDb = new FlightDbContext(options);
         
+        if (!_readDb.Flights.Any())
+        {
+            CreateData().Wait(); 
+        }
+        
         _publish = Channel.CreateUnbounded<Message>(new UnboundedChannelOptions()
             { SingleReader = true, SingleWriter = true, AllowSynchronousContinuations = true });
         
@@ -69,17 +74,40 @@ public class FlightService : IDisposable
         
         _queues.AddRepliesConsumer(SagaOrdersEventHandler);
     }
-
-    private void Initialize()
+    
+    private async Task CreateData()
     {
-        JObject o1 = JObject.Parse(File.ReadAllText(@"c:\videogames.json"));
+        using StreamReader departure = new("./departure_airports.json");
+        var json = await departure.ReadToEndAsync(Token);
+        List<Airport> departureAirports = JsonConvert.DeserializeObject<List<Airport>>(json) ?? [];
+        
+        using StreamReader arrival = new("./arrival_airports.json");
+        var json2 = await arrival.ReadToEndAsync(Token);
+        List<Airport> arrivalAirports = JsonConvert.DeserializeObject<List<Airport>>(json2) ?? [];
+        var rnd = new Random();
+        
+        
+        var departureDbAirports = departureAirports.Select(airport => new AirportDb { AirportCode = airport.Code, AirportCity = airport.Name, IsDeparture = true }).ToList();
+        _writeDb.AddRange(departureDbAirports);
+        var arrivalDbAirports = arrivalAirports.Select(airport => new AirportDb { AirportCode = airport.Code, AirportCity = airport.Name, IsDeparture = false }).ToList();
+        _writeDb.AddRange(arrivalDbAirports);
 
-        // read JSON directly from a file
-        using (StreamReader file = File.OpenText(@"c:\videogames.json"))
-        using (JsonTextReader reader = new JsonTextReader(file))
+        List<FlightDb> flights = [];
+        foreach (var airport in departureDbAirports)
         {
-            JObject o2 = (JObject) JToken.ReadFrom(reader);
+            for (var i = 0; i < rnd.Next(1, 5); i++)
+            {
+                _writeDb.Add(new FlightDb
+                {
+                    Amount = rnd.Next(5, 25),
+                    FlightTime = DateTime.UnixEpoch + TimeSpan.FromSeconds(rnd.Next(1715993599, 1747529599)),
+                    ArrivalAirport = arrivalDbAirports[rnd.Next(0, arrivalDbAirports.Count - 1)],
+                    DepartureAirport = airport,
+                    Price = rnd.Next(80, 250)
+                });
+            }
         }
+        await _writeDb.SaveChangesAsync(Token);
     }
 
     /// <summary>

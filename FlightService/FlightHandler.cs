@@ -84,70 +84,132 @@ public class FlightHandler
 
     private async Task TempBookFlight(Message message)
     {
-        if (message.MessageType != MessageType.HotelRequest || message.Body == null) return;
-        var requestBody = (HotelRequest)message.Body;
+        if (message.MessageType != MessageType.FlightRequest || message.Body == null) return;
+        var requestBody = (FlightRequest)message.Body;
         
+        await _dbWriteLock.WaitAsync(Token);
+        await using var transaction = await _writeDb.Database.BeginTransactionAsync(Token);
+
+        var flights = await _writeDb.Flights
+            .Include(p => p.ArrivalAirport)
+            .Include(p => p.DepartureAirport)
+            .FirstOrDefaultAsync(p => p.DepartureAirport.AirportCity.Equals(requestBody.CityFrom)
+                                      && p.ArrivalAirport.AirportCity.Equals(requestBody.CityTo)
+                                      && p.Amount - requestBody.PassangerCount >= 0
+                                      && p.FlightTime.Equals(requestBody.BookFrom));
         
-        await _dbReadLock.WaitAsync(Token);
-        var available = _readDb.Bookings.Include(p => p.Flight);
-        var rnd = new Random();
-        await Task.Delay(rnd.Next(0, 100), Token);
-        var result = rnd.Next(0, 1) switch
+        if (flights == null)
         {
-            1 => SagaState.PaymentAccept,
-            _ => SagaState.PaymentFailed
-        };
+            await transaction.RollbackAsync(Token);
+
+            message.MessageId += 1;
+            message.MessageType = MessageType.PaymentRequest;
+            message.State = SagaState.FlightTimedFail;
+            message.Body = new PaymentRequest();
+            
+            await Publish.Writer.WriteAsync(message, Token);
+            _dbWriteLock.Release();
+            _concurencySemaphore.Release();
+            return;
+        }
         
-        message.MessageType = MessageType.PaymentReply;
+
+        _writeDb.Bookings.Add(new Booking
+        {
+            Flight = flights,
+            TransactionId = message.TransactionId,
+            Temporary = 1,
+            TemporaryDt = DateTime.Now,
+            Amount = flights.Amount
+        });
+        flights.Amount-=requestBody.PassangerCount;
+        await _readDb.SaveChangesAsync(Token);
+        await transaction.CommitAsync(Token);
+
         message.MessageId += 1;
-        message.State = result;
-        message.Body = new PaymentReply();
+        message.MessageType = MessageType.PaymentRequest;
+        message.State = SagaState.HotelTimedAccept;
+        message.Body = new PaymentRequest();
         message.CreationDate = DateTime.Now;
         
         await Publish.Writer.WriteAsync(message, Token);
-        
+        _dbWriteLock.Release();
         _concurencySemaphore.Release();
+
     }
     
     private async Task TempRollback(Message message)
     {
-        var rnd = new Random();
-        await Task.Delay(rnd.Next(0, 100), Token);
-        var result = rnd.Next(0, 1) switch
-        {
-            1 => SagaState.PaymentAccept,
-            _ => SagaState.PaymentFailed
-        };
+        if (message.MessageType != MessageType.FlightRequest || message.Body == null) return;
+        var requestBody = (FlightRequest)message.Body;
         
-        message.MessageType = MessageType.PaymentReply;
+        await _dbReadLock.WaitAsync(Token);
+        await using var transaction = await _readDb.Database.BeginTransactionAsync(Token);
+
+        var booked = _readDb.Bookings
+            .Where(p => p.TransactionId == message.TransactionId);
+
+        if (booked.Any())
+        {
+            booked.First().Flight.Amount+=booked.First().Amount;
+            await booked.ExecuteDeleteAsync(Token);
+            
+        }
+        await _readDb.SaveChangesAsync(Token);
+        await transaction.CommitAsync(Token);
+        
+        message.MessageType = MessageType.OrderReply;
         message.MessageId += 1;
-        message.State = result;
-        message.Body = new PaymentReply();
+        message.State = SagaState.FlightTimedRollback;
+        message.Body = new FlightReply();
         message.CreationDate = DateTime.Now;
         
         await Publish.Writer.WriteAsync(message, Token);
-        
+        _dbReadLock.Release();
         _concurencySemaphore.Release();
     }
     
     private async Task BookFlight(Message message)
     {
-        var rnd = new Random();
-        await Task.Delay(rnd.Next(0, 100), Token);
-        var result = rnd.Next(0, 1) switch
-        {
-            1 => SagaState.PaymentAccept,
-            _ => SagaState.PaymentFailed
-        };
+        if (message.MessageType != MessageType.FlightRequest || message.Body == null) return;
+        var requestBody = (FlightRequest)message.Body;
         
-        message.MessageType = MessageType.PaymentReply;
+        await _dbReadLock.WaitAsync(Token);
+        await using var transaction = await _readDb.Database.BeginTransactionAsync(Token);
+
+        var booked = _readDb.Bookings
+            .Where(p => p.TransactionId == message.TransactionId);
+
+        if (booked.Any())
+        {
+            var booking = booked.FirstOrDefault();
+            if (booking != null)
+            {
+                booking.Temporary = 0;
+                await _readDb.SaveChangesAsync(Token);
+                await transaction.CommitAsync(Token);
+                
+                message.MessageType = MessageType.OrderReply;
+                message.MessageId += 1;
+                message.State = SagaState.FlightFullAccept;
+                message.Body = new FlightReply();
+                message.CreationDate = DateTime.Now;
+        
+                await Publish.Writer.WriteAsync(message, Token);
+                _dbReadLock.Release();
+                _concurencySemaphore.Release();
+            }
+        }
+        await transaction.RollbackAsync(Token);
+        
+        message.MessageType = MessageType.OrderReply;
         message.MessageId += 1;
-        message.State = result;
-        message.Body = new PaymentReply();
+        message.State = SagaState.FlightFullFail;
+        message.Body = new FlightReply();
         message.CreationDate = DateTime.Now;
         
         await Publish.Writer.WriteAsync(message, Token);
-        
+        _dbReadLock.Release();
         _concurencySemaphore.Release();
     }
 }

@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Globalization;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using NLog;
 using NLog.Extensions.Logging;
 using RabbitMQ.Client.Exceptions;
@@ -58,6 +60,15 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+await using var scope = app.Services.CreateAsyncScope();
+{
+    await using var db = scope.ServiceProvider.GetService<FlightDbContext>();
+    {
+        logger.Info("CAN CONNECT {v}" ,db.Database.CanConnect());
+        await db.Database.MigrateAsync();
+    }
+}
+
 app.UseHttpsRedirection();
 
 FlightService? hotelService = null;
@@ -75,24 +86,94 @@ catch (ArgumentException)
     GracefulExit(app, logger, [hotelService]);
 }
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
+app.MapGet("/flights", (FlightsRequestHttp request) =>
     {
-        var forecast = Enumerable.Range(1, 5).Select(index =>
-                new WeatherForecast
-                (
-                    DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                    Random.Shared.Next(-20, 55),
-                    summaries[Random.Shared.Next(summaries.Length)]
-                ))
-            .ToArray();
-        return forecast;
+        using var scope = app.Services.CreateAsyncScope();
+        using var db = scope.ServiceProvider.GetService<FlightDbContext>();
+
+        var dbFlights = from flights in db.Flights
+            where request.ArrivalAirportCodes.Contains(flights.ArrivalAirport.AirportCode)
+                  && request.DepartureAirportCodes.Contains(flights.DepartureAirport.AirportCode)
+                  && flights.FlightTime.ToString(CultureInfo.InvariantCulture).Contains(request.DepartureDate)
+                  join booking in db.Bookings on flights equals booking.Flight
+            group booking by flights into g
+                where g.Count() + request.NumberOfPassengers < g.Key.Amount
+            select g.Key;
+
+        var flightsResponse = new List<FlightResponse>();
+
+        foreach (var flight in dbFlights)
+        {
+            flightsResponse.Add(new FlightResponse
+            {
+                Available = true,
+                FlightId = flight.FlightDbId.ToString(),
+                DepartureAirportCode = flight.DepartureAirport.AirportCode,
+                DepartureAirportName = flight.DepartureAirport.AirportCity,
+                ArrivalAirportCode = flight.ArrivalAirport.AirportCode,
+                ArrivalAirportName = flight.ArrivalAirport.AirportCity,
+                DepartureDate = flight.FlightTime.ToString(),
+                Price = 0
+            });
+        }
+
+        return JsonConvert.SerializeObject(flightsResponse);
     })
-    .WithName("GetWeatherForecast")
+    .WithName("GetFlights")
+    .WithOpenApi();
+
+app.MapGet("/flight", (FlightRequestHttp request) =>
+    {
+        using var scope = app.Services.CreateAsyncScope();
+        using var db = scope.ServiceProvider.GetService<FlightDbContext>();
+
+        var dbFlights = from flights in db.Flights
+            where request.FlightId.Equals(flights.FlightDbId.ToString())
+                  && request.NumberOfPassengers == flights.Amount
+            select flights;
+
+        var flight = dbFlights.FirstOrDefault();
+        
+        
+       return JsonConvert.SerializeObject(new FlightResponse
+            {
+                Available = true,
+                FlightId = flight.FlightDbId.ToString(),
+                DepartureAirportCode = flight.DepartureAirport.AirportCode,
+                DepartureAirportName = flight.DepartureAirport.AirportCity,
+                ArrivalAirportCode = flight.ArrivalAirport.AirportCode,
+                ArrivalAirportName = flight.ArrivalAirport.AirportCity,
+                DepartureDate = flight.FlightTime.ToString(),
+                Price = 0
+            });
+    })
+    .WithName("GetFlight")
+    .WithOpenApi();
+
+app.MapGet("/departure_airports", () =>
+    {
+        using var scope = app.Services.CreateAsyncScope();
+        using var db = scope.ServiceProvider.GetService<FlightDbContext>();
+
+        var dbFlights = from flights in db.Flights
+            select flights.DepartureAirport;
+
+        var flightsResponse = new DepartureAirports
+        {
+            Airports = []
+        };
+        foreach (var airport in dbFlights)
+        {
+            flightsResponse.Airports.Add(new AirportHttp
+            {
+                AirportCode = airport.AirportCode,
+                AirportName = airport.AirportCity
+            });
+        }
+
+        return JsonConvert.SerializeObject(flightsResponse);
+    })
+    .WithName("GetFlights")
     .WithOpenApi();
 
 app.Run();
@@ -128,11 +209,4 @@ async Task AwaitAppStop(WebApplication wA)
     await wA.DisposeAsync();
 }
 
-namespace vgt_saga_flight
-{
-    internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-    {
-        public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-    }
-}
 

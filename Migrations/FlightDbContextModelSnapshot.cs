@@ -54,6 +54,9 @@ namespace vgt_saga_flight.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("BookingId"));
 
+                    b.Property<int>("Amount")
+                        .HasColumnType("integer");
+
                     b.Property<int>("FlightDbId")
                         .HasColumnType("integer");
 
@@ -92,6 +95,9 @@ namespace vgt_saga_flight.Migrations
 
                     b.Property<DateTime>("FlightTime")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Price")
+                        .HasColumnType("integer");
 
                     b.HasKey("FlightDbId");
 
