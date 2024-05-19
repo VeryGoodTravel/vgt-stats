@@ -122,7 +122,7 @@ public class FlightHandler
             TemporaryDt = DateTime.Now,
             Amount = flights.Amount
         });
-        flights.Amount-=requestBody.PassangerCount;
+        flights.Amount-=requestBody.PassangerCount.Value;
         await _readDb.SaveChangesAsync(Token);
         await transaction.CommitAsync(Token);
 
