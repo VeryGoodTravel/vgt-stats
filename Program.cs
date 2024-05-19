@@ -208,6 +208,8 @@ void GracefulExit(WebApplication wA, ILogger log, List<IDisposable?> toDispose)
         log.Info("App already disposed off");
     }
 
+    throw new Exception("Kill the rest of the app");
+    
     LogManager.Shutdown();
     Environment.Exit(0);
     throw new Exception("Kill the rest of the app");
