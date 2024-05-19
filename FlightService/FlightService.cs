@@ -54,11 +54,21 @@ public class FlightService : IDisposable
         _jsonUtils = new Utils(_logger);
         _payments = Channel.CreateUnbounded<Message>(new UnboundedChannelOptions()
             { SingleReader = true, SingleWriter = true, AllowSynchronousContinuations = true });
-        
+        _logger.Info("-------------------------------------------------------------------------------- Creating service connection ----------------------------------------------------------");
+
         var connStr = SecretUtils.GetConnectionString(_config, "DB_NAME_FLIGHT", _logger);
-        var options = new DbContextOptions<FlightDbContext>();
-        _writeDb = new FlightDbContext(options);
-        _readDb = new FlightDbContext(options);
+        var op = new DbContextOptionsBuilder<FlightDbContext>();
+        op.UseNpgsql(connStr);
+        //op.UseLoggerFactory(lf);
+        _logger.Info("-------------------------------------------------------------------------------- creting write db context ----------------------------------------------------------");
+
+        _writeDb = new FlightDbContext(op.Options);
+        
+        _logger.Info("-------------------------------------------------------------------------------- creating read db context ----------------------------------------------------------");
+        _readDb = new FlightDbContext(op.Options);
+        
+        _logger.Info("-------------------------------------------------------------------------------- Created db connections ----------------------------------------------------------");
+
         
         if (!_readDb.Flights.Any())
         {
@@ -79,17 +89,17 @@ public class FlightService : IDisposable
     {
         using StreamReader departure = new("./departure_airports.json");
         var json = await departure.ReadToEndAsync(Token);
-        List<Airport> departureAirports = JsonConvert.DeserializeObject<List<Airport>>(json) ?? [];
+        Dictionary<string,string> departureAirports = JsonConvert.DeserializeObject<Dictionary<string,string>>(json) ?? [];
         
         using StreamReader arrival = new("./arrival_airports.json");
         var json2 = await arrival.ReadToEndAsync(Token);
-        List<Airport> arrivalAirports = JsonConvert.DeserializeObject<List<Airport>>(json2) ?? [];
+        Dictionary<string,string> arrivalAirports = JsonConvert.DeserializeObject<Dictionary<string,string>>(json2) ?? [];
         var rnd = new Random();
         
         
-        var departureDbAirports = departureAirports.Select(airport => new AirportDb { AirportCode = airport.Code, AirportCity = airport.Name, IsDeparture = true }).ToList();
+        var departureDbAirports = departureAirports.Select(airport => new AirportDb { AirportCode = airport.Key, AirportCity = airport.Value, IsDeparture = true }).ToList();
         _writeDb.AddRange(departureDbAirports);
-        var arrivalDbAirports = arrivalAirports.Select(airport => new AirportDb { AirportCode = airport.Code, AirportCity = airport.Name, IsDeparture = false }).ToList();
+        var arrivalDbAirports = arrivalAirports.Select(airport => new AirportDb { AirportCode = airport.Key, AirportCity = airport.Value, IsDeparture = false }).ToList();
         _writeDb.AddRange(arrivalDbAirports);
 
         List<FlightDb> flights = [];

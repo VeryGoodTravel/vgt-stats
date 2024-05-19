@@ -66,8 +66,12 @@ await using var scope = app.Services.CreateAsyncScope();
     {
         logger.Info("CAN CONNECT {v}" ,db.Database.CanConnect());
         await db.Database.MigrateAsync();
+        logger.Info("-------------------------------------------------------------------------------- After migrations before disposes ----------------------------------------------------------");
+
     }
 }
+
+logger.Info("-------------------------------------------------------------------------------- OUTSIDE OF MIGRATIONS SUCCESFULLY DISPOSED ----------------------------------------------------------");
 
 app.UseHttpsRedirection();
 
@@ -75,14 +79,20 @@ FlightService? hotelService = null;
 
 try
 {
+    logger.Info("-------------------------------------------------------------------------------- Trying setup of the service ----------------------------------------------------------");
+
     hotelService = new FlightService(app.Configuration, lf);
 }
 catch (BrokerUnreachableException)
 {
+    logger.Info("-------------------------------------------------------------------------------- FAILED setup ----------------------------------------------------------");
+
     GracefulExit(app, logger, [hotelService]);
 }
 catch (ArgumentException)
 {
+    logger.Info("-------------------------------------------------------------------------------- Failed setup ----------------------------------------------------------");
+
     GracefulExit(app, logger, [hotelService]);
 }
 
