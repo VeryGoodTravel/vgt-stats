@@ -33,6 +33,7 @@ namespace vgt_saga_flight.Migrations
                 {
                     FlightDbId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Price = table.Column<int>(type: "integer", nullable: false),
                     Amount = table.Column<int>(type: "integer", nullable: false),
                     FlightTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     ArrivalAirportAirportDbId = table.Column<int>(type: "integer", nullable: false),
@@ -64,7 +65,8 @@ namespace vgt_saga_flight.Migrations
                     FlightDbId = table.Column<int>(type: "integer", nullable: false),
                     TransactionId = table.Column<Guid>(type: "uuid", nullable: false),
                     Temporary = table.Column<int>(type: "integer", nullable: false),
-                    TemporaryDt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    TemporaryDt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Amount = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {

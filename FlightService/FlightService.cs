@@ -75,6 +75,9 @@ public class FlightService : IDisposable
             CreateData().Wait(); 
         }
         
+        _logger.Info("-------------------------------------------------------------------------------- Created db data ----------------------------------------------------------");
+
+        
         _publish = Channel.CreateUnbounded<Message>(new UnboundedChannelOptions()
             { SingleReader = true, SingleWriter = true, AllowSynchronousContinuations = true });
         

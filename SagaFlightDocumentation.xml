@@ -164,30 +164,6 @@
         <member name="M:vgt_saga_flight.FlightService.FlightService.Dispose">
             <inheritdoc/>
         </member>
-        <member name="T:vgt_saga_flight.Migrations.Initial">
-            <inheritdoc />
-        </member>
-        <member name="M:vgt_saga_flight.Migrations.Initial.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
-            <inheritdoc />
-        </member>
-        <member name="M:vgt_saga_flight.Migrations.Initial.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
-            <inheritdoc />
-        </member>
-        <member name="M:vgt_saga_flight.Migrations.Initial.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
-            <inheritdoc />
-        </member>
-        <member name="T:vgt_saga_flight.Migrations.FullService">
-            <inheritdoc />
-        </member>
-        <member name="M:vgt_saga_flight.Migrations.FullService.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
-            <inheritdoc />
-        </member>
-        <member name="M:vgt_saga_flight.Migrations.FullService.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
-            <inheritdoc />
-        </member>
-        <member name="M:vgt_saga_flight.Migrations.FullService.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
-            <inheritdoc />
-        </member>
         <member name="T:vgt_saga_flight.Models.FlightDbContext">
             <inheritdoc />
         </member>
