@@ -66,7 +66,7 @@ await using var scope = app.Services.CreateAsyncScope();
     {
         logger.Info("CAN CONNECT {v}" ,db.Database.CanConnect());
         logger.Info("-------------------------------------------------------------------------------- Before deletion ----------------------------------------------------------");
-        db.Database.EnsureDeleted();
+        //db.Database.EnsureDeleted();
         logger.Info("-------------------------------------------------------------------------------- Before migrations  ----------------------------------------------------------");
         await db.Database.MigrateAsync();
         logger.Info("-------------------------------------------------------------------------------- After migrations before disposes ----------------------------------------------------------");
