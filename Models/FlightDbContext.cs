@@ -1,12 +1,12 @@
-using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace vgt_saga_flight.Models;
 
 /// <inheritdoc />
 public class FlightDbContext : DbContext
 {
-    private string _connectionString;
+    private string _connectionString = "";
     
     /// <summary>
     /// Set of Database Airports entities mapped to AirportDb objects
@@ -26,13 +26,27 @@ public class FlightDbContext : DbContext
         : base(options)
     {
     }
+    
+    /// <inheritdoc />
+    public FlightDbContext(DbContextOptions<FlightDbContext> options, string conn)
+        : base(options)
+    {
+        _connectionString = conn;
+    }
     // {
     //     _connectionString = connectionString;
     // }
     //
-    // /// <inheritdoc />
-    // protected override void OnConfiguring(DbContextOptionsBuilder options)
-    //     => options.UseNpgsql(_connectionString);
+    /// <inheritdoc />
+    protected override void OnConfiguring(DbContextOptionsBuilder options)
+    {
+        if (!_connectionString.IsNullOrEmpty())
+        {
+            options.UseNpgsql(_connectionString);
+        }
+        
+        base.OnConfiguring(options);
+    }
 }
 
 /// <summary>

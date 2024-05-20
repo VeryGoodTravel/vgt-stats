@@ -57,15 +57,14 @@ public class FlightService : IDisposable
         _logger.Info("-------------------------------------------------------------------------------- Creating service connection ----------------------------------------------------------");
 
         var connStr = SecretUtils.GetConnectionString(_config, "DB_NAME_FLIGHT", _logger);
-        var op = new DbContextOptionsBuilder<FlightDbContext>();
-        op.UseNpgsql(connStr);
+        var op = new DbContextOptions<FlightDbContext>();
         //op.UseLoggerFactory(lf);
         _logger.Info("-------------------------------------------------------------------------------- creting write db context ----------------------------------------------------------");
 
-        _writeDb = new FlightDbContext(op.Options);
+        _writeDb = new FlightDbContext(op, connStr);
         
         _logger.Info("-------------------------------------------------------------------------------- creating read db context ----------------------------------------------------------");
-        _readDb = new FlightDbContext(op.Options);
+        _readDb = new FlightDbContext(op, connStr);
         
         _logger.Info("-------------------------------------------------------------------------------- Created db connections ----------------------------------------------------------");
 

@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using NLog;
@@ -99,7 +100,7 @@ catch (ArgumentException)
     GracefulExit(app, logger, [hotelService]);
 }
 
-app.MapGet("/flights", (FlightsRequestHttp request) =>
+app.MapGet("/flights", ([FromBody]FlightsRequestHttp request) =>
     {
         using var scope = app.Services.CreateAsyncScope();
         using var db = scope.ServiceProvider.GetService<FlightDbContext>();
@@ -135,7 +136,7 @@ app.MapGet("/flights", (FlightsRequestHttp request) =>
     .WithName("GetFlights")
     .WithOpenApi();
 
-app.MapGet("/flight", (FlightRequestHttp request) =>
+app.MapGet("/flight", ([FromBody]FlightRequestHttp request) =>
     {
         using var scope = app.Services.CreateAsyncScope();
         using var db = scope.ServiceProvider.GetService<FlightDbContext>();
@@ -186,7 +187,7 @@ app.MapGet("/departure_airports", () =>
 
         return JsonConvert.SerializeObject(flightsResponse);
     })
-    .WithName("GetFlights")
+    .WithName("GetAirports")
     .WithOpenApi();
 
 app.Run();

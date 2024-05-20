@@ -197,6 +197,12 @@
         <member name="M:vgt_saga_flight.Models.FlightDbContext.#ctor(Microsoft.EntityFrameworkCore.DbContextOptions{vgt_saga_flight.Models.FlightDbContext})">
             <inheritdoc />
         </member>
+        <member name="M:vgt_saga_flight.Models.FlightDbContext.#ctor(Microsoft.EntityFrameworkCore.DbContextOptions{vgt_saga_flight.Models.FlightDbContext},System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:vgt_saga_flight.Models.FlightDbContext.OnConfiguring(Microsoft.EntityFrameworkCore.DbContextOptionsBuilder)">
+            <inheritdoc />
+        </member>
         <member name="T:vgt_saga_flight.Models.Booking">
             <summary>
             Booking object representing an object from the database
