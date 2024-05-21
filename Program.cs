@@ -176,7 +176,7 @@ app.MapGet("/departure_airports", () =>
         {
             Airports = []
         };
-        foreach (var airport in dbFlights)
+        foreach (var airport in dbFlights.Distinct())
         {
             flightsResponse.Airports.Add(new AirportHttp
             {
@@ -184,6 +184,8 @@ app.MapGet("/departure_airports", () =>
                 AirportName = airport.AirportCity
             });
         }
+
+        flightsResponse.Airports = flightsResponse.Airports.Distinct().ToList();
 
         return JsonConvert.SerializeObject(flightsResponse);
     })
