@@ -70,6 +70,7 @@ public class FlightQueueHandler : IDisposable
                 _logger.Error("{p}Couldn't connect to the RabbitMq server. Check connection string and/or connection {e}",
                     LoggerPrefix, e);
             }
+            Task.Delay(100).Wait();
         }
 
         _logger.Debug("{p}Connected to the RabbitMq server", LoggerPrefix);
