@@ -102,7 +102,7 @@ catch (ArgumentException)
     GracefulExit(app, logger, [hotelService]);
 }
 
-app.MapGet("/flights", ([FromBody]FlightsRequestHttp request) =>
+app.MapPost("/flights", ([FromBody]FlightsRequestHttp request) =>
     {
         using var scope = app.Services.CreateAsyncScope();
         using var db = scope.ServiceProvider.GetService<FlightDbContext>();
@@ -134,12 +134,12 @@ app.MapGet("/flights", ([FromBody]FlightsRequestHttp request) =>
             });
         }
 
-        return JsonConvert.SerializeObject(flightsResponse);
+        return flightsResponse;
     })
     .WithName("GetFlights")
     .WithOpenApi();
 
-app.MapGet("/flight", ([FromBody]FlightRequestHttp request) =>
+app.MapPost("/flight", ([FromBody]FlightRequestHttp request) =>
     {
         using var scope = app.Services.CreateAsyncScope();
         using var db = scope.ServiceProvider.GetService<FlightDbContext>();
@@ -152,7 +152,7 @@ app.MapGet("/flight", ([FromBody]FlightRequestHttp request) =>
         var flight = dbFlights.FirstOrDefault();
         
         
-       return JsonConvert.SerializeObject(new FlightResponse
+       return new FlightResponse
             {
                 Available = true,
                 FlightId = flight.FlightDbId.ToString(),
@@ -162,7 +162,7 @@ app.MapGet("/flight", ([FromBody]FlightRequestHttp request) =>
                 ArrivalAirportName = flight.ArrivalAirport.AirportCity,
                 DepartureDate = flight.FlightTime.ToString(),
                 Price = 0
-            });
+            };
     })
     .WithName("GetFlight")
     .WithOpenApi();
