@@ -108,18 +108,19 @@ app.MapGet("/flights", ([FromBody]FlightsRequestHttp request) =>
         using var db = scope.ServiceProvider.GetService<FlightDbContext>();
 
         var dbFlights = from flights in db.Flights
-            where request.ArrivalAirportCodes.Contains(flights.ArrivalAirport.AirportCode)
-                  && request.DepartureAirportCodes.Contains(flights.DepartureAirport.AirportCode)
+            where request.ArrivalAirportCodes.Equals(flights.ArrivalAirport.AirportCode)
+                  && request.DepartureAirportCodes.Equals(flights.DepartureAirport.AirportCode)
                   && flights.FlightTime.ToString(CultureInfo.InvariantCulture).Contains(request.DepartureDate)
-                  join booking in db.Bookings on flights equals booking.Flight
-            group booking by flights into g
-                where g.Count() + request.NumberOfPassengers < g.Key.Amount
-            select g.Key;
+                  && (from m in db.Bookings
+                      where m.Flight == flights
+                      select m.Amount).Sum() + request.NumberOfPassengers < flights.Amount
+            select flights;
 
         var flightsResponse = new List<FlightResponse>();
 
         foreach (var flight in dbFlights)
         {
+            if (flight == null) continue;
             flightsResponse.Add(new FlightResponse
             {
                 Available = true,
@@ -128,7 +129,7 @@ app.MapGet("/flights", ([FromBody]FlightsRequestHttp request) =>
                 DepartureAirportName = flight.DepartureAirport.AirportCity,
                 ArrivalAirportCode = flight.ArrivalAirport.AirportCode,
                 ArrivalAirportName = flight.ArrivalAirport.AirportCity,
-                DepartureDate = flight.FlightTime.ToString(),
+                DepartureDate = flight.FlightTime.ToString(CultureInfo.InvariantCulture),
                 Price = 0
             });
         }
