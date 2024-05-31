@@ -112,8 +112,22 @@ public class FlightService : IDisposable
                 _writeDb.Add(new FlightDb
                 {
                     Amount = rnd.Next(5, 25),
-                    FlightTime = DateTime.UnixEpoch + TimeSpan.FromSeconds(rnd.Next(1715993599, 1747529599)),
+                    FlightTime = DateTime.Now + TimeSpan.FromMinutes(rnd.Next(0, 1000000)),
                     ArrivalAirport = arrivalDbAirports[rnd.Next(0, arrivalDbAirports.Count - 1)],
+                    DepartureAirport = airport,
+                    Price = rnd.Next(80, 250)
+                });
+            }
+        }
+        foreach (var airport in arrivalDbAirports)
+        {
+            for (var i = 0; i < rnd.Next(1, 5); i++)
+            {
+                _writeDb.Add(new FlightDb
+                {
+                    Amount = rnd.Next(5, 25),
+                    FlightTime = DateTime.Now + TimeSpan.FromMinutes(rnd.Next(0, 1000000)),
+                    ArrivalAirport = departureDbAirports[rnd.Next(0, departureDbAirports.Count - 1)],
                     DepartureAirport = airport,
                     Price = rnd.Next(80, 250)
                 });

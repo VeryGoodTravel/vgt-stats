@@ -13,6 +13,11 @@ public class FlightsRequestHttp
     [JsonProperty("departure_date")]
     public string DepartureDate { get; set; }
     
+    public  DateTime DepartureDateDt()
+    {
+        return DateTime.Parse(DepartureDate).ToUniversalTime().Date;
+    }
+    
     [JsonProperty("number_of_passengers")]
     public int NumberOfPassengers { get; set; }
 }
