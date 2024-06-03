@@ -107,7 +107,8 @@ app.MapPost("/flights", ([FromBody]FlightsRequestHttp request) =>
         using var scope = app.Services.CreateAsyncScope();
         using var db = scope.ServiceProvider.GetService<FlightDbContext>();
 
-        logger.Info("fligths request {v}" ,request);
+        logger.Info("fligths request date {v}, departure {d} and arrival {a}" ,
+            request.DepartureDateDt(), request.DepartureAirportCodes, request.ArrivalAirportCodes);
         
         var dbFlights = from flights in db.Flights
             where request.ArrivalAirportCodes.Equals(flights.ArrivalAirport.AirportCode)
@@ -118,13 +119,12 @@ app.MapPost("/flights", ([FromBody]FlightsRequestHttp request) =>
                       select m.Amount).Sum() + request.NumberOfPassengers < flights.Amount
             select flights;
 
-        logger.Info("fligths results {v}" ,dbFlights);
-        var flightsResponse = new List<FlightResponse>();
+        var results = dbFlights.ToList();
+        logger.Info("fligths results count {c} and {v} " , results.Count,results);
 
-        foreach (var flight in dbFlights)
-        {
-            if (flight == null) continue;
-            flightsResponse.Add(new FlightResponse
+        return (from flight in results
+            where flight != null
+            select new FlightResponse
             {
                 Available = true,
                 FlightId = flight.FlightDbId.ToString(),
@@ -134,10 +134,7 @@ app.MapPost("/flights", ([FromBody]FlightsRequestHttp request) =>
                 ArrivalAirportName = flight.ArrivalAirport.AirportCity,
                 DepartureDate = flight.FlightTime.ToString(CultureInfo.InvariantCulture),
                 Price = 0
-            });
-        }
-
-        return flightsResponse;
+            }).ToList();
     })
     .WithName("GetFlights")
     .WithOpenApi();
