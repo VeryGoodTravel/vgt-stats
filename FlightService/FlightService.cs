@@ -107,7 +107,7 @@ public class FlightService : IDisposable
         List<FlightDb> flights = [];
         foreach (var airport in departureDbAirports)
         {
-            for (var i = 0; i < rnd.Next(1, 5); i++)
+            for (var i = 0; i < rnd.Next(40, 100); i++)
             {
                 _writeDb.Add(new FlightDb
                 {
@@ -121,7 +121,7 @@ public class FlightService : IDisposable
         }
         foreach (var airport in arrivalDbAirports)
         {
-            for (var i = 0; i < rnd.Next(1, 5); i++)
+            for (var i = 0; i < rnd.Next(6, 20); i++)
             {
                 _writeDb.Add(new FlightDb
                 {

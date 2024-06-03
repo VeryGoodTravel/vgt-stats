@@ -107,6 +107,8 @@ app.MapPost("/flights", ([FromBody]FlightsRequestHttp request) =>
         using var scope = app.Services.CreateAsyncScope();
         using var db = scope.ServiceProvider.GetService<FlightDbContext>();
 
+        logger.Info("fligths request {v}" ,request);
+        
         var dbFlights = from flights in db.Flights
             where request.ArrivalAirportCodes.Equals(flights.ArrivalAirport.AirportCode)
                   && request.DepartureAirportCodes.Equals(flights.DepartureAirport.AirportCode)
@@ -116,6 +118,7 @@ app.MapPost("/flights", ([FromBody]FlightsRequestHttp request) =>
                       select m.Amount).Sum() + request.NumberOfPassengers < flights.Amount
             select flights;
 
+        logger.Info("fligths results {v}" ,dbFlights);
         var flightsResponse = new List<FlightResponse>();
 
         foreach (var flight in dbFlights)
@@ -144,6 +147,8 @@ app.MapPost("/flight", ([FromBody]FlightRequestHttp request) =>
         using var scope = app.Services.CreateAsyncScope();
         using var db = scope.ServiceProvider.GetService<FlightDbContext>();
 
+        logger.Info("fligth request {v}" ,request);
+        
         var dbFlights = from flights in db.Flights
             where request.FlightId.Equals(flights.FlightDbId.ToString())
                   && request.NumberOfPassengers == flights.Amount
@@ -151,6 +156,7 @@ app.MapPost("/flight", ([FromBody]FlightRequestHttp request) =>
 
         var flight = dbFlights.FirstOrDefault();
         
+        logger.Info("fligth result {v}" ,flight);
         
        return new FlightResponse
             {
