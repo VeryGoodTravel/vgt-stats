@@ -175,8 +175,9 @@ app.MapGet("/departure_airports", () =>
         using var scope = app.Services.CreateAsyncScope();
         using var db = scope.ServiceProvider.GetService<FlightDbContext>();
 
-        var dbFlights = from flights in db.Flights
-            select flights.DepartureAirport;
+        var dbFlights = from airports in db.Airports
+            where airports.IsDeparture == true
+            select airports;
 
         var flightsResponse = new DepartureAirports
         {
