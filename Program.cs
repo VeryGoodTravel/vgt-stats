@@ -111,8 +111,8 @@ app.MapPost("/flights", ([FromBody]FlightsRequestHttp request) =>
             request.DepartureDateDt(), request.DepartureAirportCodes, request.ArrivalAirportCodes);
         
         var dbFlights = from flights in db.Flights
-            where request.ArrivalAirportCodes.Equals(flights.ArrivalAirport.AirportCode)
-                  && request.DepartureAirportCodes.Equals(flights.DepartureAirport.AirportCode)
+            where request.ArrivalAirportCodes.Contains(flights.ArrivalAirport.AirportCode)
+                  && request.DepartureAirportCodes.Contains(flights.DepartureAirport.AirportCode)
                   && flights.FlightTime.Date == request.DepartureDateDt()
                   && (from m in db.Bookings
                       where m.Flight == flights
