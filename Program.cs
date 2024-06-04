@@ -148,7 +148,7 @@ app.MapPost("/flight", ([FromBody]FlightRequestHttp request) =>
         
         var dbFlights = from flights in db.Flights
             where request.FlightId.Equals(flights.FlightDbId.ToString())
-                  && request.NumberOfPassengers == flights.Amount
+                  && request.NumberOfPassengers <= flights.Amount
             select flights;
 
         var flight = dbFlights.Include(p => p.DepartureAirport).Include(p => p.ArrivalAirport).FirstOrDefault();
