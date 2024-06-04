@@ -119,7 +119,7 @@ app.MapPost("/flights", ([FromBody]FlightsRequestHttp request) =>
                       select m.Amount).Sum() + request.NumberOfPassengers < flights.Amount
             select flights;
 
-        var results = dbFlights.ToList();
+        var results = dbFlights.Include(p => p.DepartureAirport).Include(p => p.ArrivalAirport).ToList();
         logger.Info("fligths results count {c} and {v} " , results.Count,results);
 
         return (from flight in results
@@ -133,7 +133,7 @@ app.MapPost("/flights", ([FromBody]FlightsRequestHttp request) =>
                 ArrivalAirportCode = flight.ArrivalAirport.AirportCode,
                 ArrivalAirportName = flight.ArrivalAirport.AirportCity,
                 DepartureDate = flight.FlightTime.ToString(CultureInfo.InvariantCulture),
-                Price = 0
+                Price = flight.Price
             }).ToList();
     })
     .WithName("GetFlights")
@@ -151,7 +151,7 @@ app.MapPost("/flight", ([FromBody]FlightRequestHttp request) =>
                   && request.NumberOfPassengers == flights.Amount
             select flights;
 
-        var flight = dbFlights.FirstOrDefault();
+        var flight = dbFlights.Include(p => p.DepartureAirport).Include(p => p.ArrivalAirport).FirstOrDefault();
         
         logger.Info("fligth result {v}" ,flight);
         
@@ -164,7 +164,7 @@ app.MapPost("/flight", ([FromBody]FlightRequestHttp request) =>
                 ArrivalAirportCode = flight.ArrivalAirport.AirportCode,
                 ArrivalAirportName = flight.ArrivalAirport.AirportCity,
                 DepartureDate = flight.FlightTime.ToString(),
-                Price = 0
+                Price = flight.Price
             };
     })
     .WithName("GetFlight")
