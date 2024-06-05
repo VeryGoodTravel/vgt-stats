@@ -107,12 +107,12 @@ public class FlightService : IDisposable
         List<FlightDb> flights = [];
         foreach (var airport in departureDbAirports)
         {
-            for (var i = 0; i < rnd.Next(40, 100); i++)
+            for (var i = 0; i < rnd.Next(1000, 1500); i++)
             {
                 _writeDb.Add(new FlightDb
                 {
                     Amount = rnd.Next(5, 25),
-                    FlightTime = DateTime.Now + TimeSpan.FromMinutes(rnd.Next(0, 1000000)),
+                    FlightTime = DateTime.Now + TimeSpan.FromMinutes(rnd.Next(0, 200000)),
                     ArrivalAirport = arrivalDbAirports[rnd.Next(0, arrivalDbAirports.Count - 1)],
                     DepartureAirport = airport,
                     Price = rnd.Next(80, 250)
@@ -121,12 +121,12 @@ public class FlightService : IDisposable
         }
         foreach (var airport in arrivalDbAirports)
         {
-            for (var i = 0; i < rnd.Next(6, 20); i++)
+            for (var i = 0; i < rnd.Next(200, 1000); i++)
             {
                 _writeDb.Add(new FlightDb
                 {
                     Amount = rnd.Next(5, 25),
-                    FlightTime = DateTime.Now + TimeSpan.FromMinutes(rnd.Next(0, 1000000)),
+                    FlightTime = DateTime.Now + TimeSpan.FromMinutes(rnd.Next(0, 200000)),
                     ArrivalAirport = departureDbAirports[rnd.Next(0, departureDbAirports.Count - 1)],
                     DepartureAirport = airport,
                     Price = rnd.Next(80, 250)
