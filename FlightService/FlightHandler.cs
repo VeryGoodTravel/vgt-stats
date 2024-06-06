@@ -70,6 +70,8 @@ public class FlightHandler
         {
             var message = await Requests.Reader.ReadAsync(Token);
 
+            _logger.Debug("Handling message {id} {type} {state}", message.MessageId, message.MessageType, message.State);
+            
             await _concurencySemaphore.WaitAsync(Token);
 
             _ = message.State switch
@@ -84,8 +86,11 @@ public class FlightHandler
 
     private async Task TempBookFlight(Message message)
     {
+        _logger.Debug("Temp Book");
         if (message.MessageType != MessageType.FlightRequest || message.Body == null) return;
         var requestBody = (FlightRequest)message.Body;
+        
+        _logger.Debug("Temp Book {id} {type} {state}", requestBody.BookFrom, requestBody.BookTo, requestBody.CityFrom);
         
         await _dbWriteLock.WaitAsync(Token);
         await using var transaction = await _writeDb.Database.BeginTransactionAsync(Token);
@@ -98,22 +103,28 @@ public class FlightHandler
                                       && p.Amount - requestBody.PassangerCount >= 0
                                       && p.FlightTime.Equals(requestBody.BookFrom));
         
+        _logger.Debug("After query");
+        
         if (flights == null)
         {
+            _logger.Debug("Rollback");
             await transaction.RollbackAsync(Token);
 
+            _logger.Debug("Creating response");
             message.MessageId += 1;
             message.MessageType = MessageType.PaymentRequest;
             message.State = SagaState.FlightTimedFail;
             message.Body = new PaymentRequest();
             
+            _logger.Debug("Publishing");
             await Publish.Writer.WriteAsync(message, Token);
+            _logger.Debug("Published");
             _dbWriteLock.Release();
             _concurencySemaphore.Release();
             return;
         }
         
-
+        _logger.Debug("Adding booking for flight {f}", flights.FlightDbId);
         _writeDb.Bookings.Add(new Booking
         {
             Flight = flights,
@@ -125,13 +136,13 @@ public class FlightHandler
         flights.Amount-=requestBody.PassangerCount.Value;
         await _readDb.SaveChangesAsync(Token);
         await transaction.CommitAsync(Token);
-
+        _logger.Debug("Creating response");
         message.MessageId += 1;
         message.MessageType = MessageType.PaymentRequest;
         message.State = SagaState.HotelTimedAccept;
         message.Body = new PaymentRequest();
         message.CreationDate = DateTime.Now;
-        
+        _logger.Debug("Publishing");
         await Publish.Writer.WriteAsync(message, Token);
         _dbWriteLock.Release();
         _concurencySemaphore.Release();
@@ -140,8 +151,11 @@ public class FlightHandler
     
     private async Task TempRollback(Message message)
     {
+        _logger.Debug("TempRollback");
         if (message.MessageType != MessageType.FlightRequest || message.Body == null) return;
         var requestBody = (FlightRequest)message.Body;
+        
+        _logger.Debug("TempRollback {id} {type} {state}", requestBody.BookFrom, requestBody.BookTo, requestBody.CityFrom);
         
         await _dbReadLock.WaitAsync(Token);
         await using var transaction = await _readDb.Database.BeginTransactionAsync(Token);
@@ -151,6 +165,7 @@ public class FlightHandler
 
         if (booked.Any())
         {
+            _logger.Debug("removing booked");
             booked.First().Flight.Amount+=booked.First().Amount;
             await booked.ExecuteDeleteAsync(Token);
             
@@ -158,12 +173,14 @@ public class FlightHandler
         await _readDb.SaveChangesAsync(Token);
         await transaction.CommitAsync(Token);
         
+        _logger.Debug("creating response");
         message.MessageType = MessageType.OrderReply;
         message.MessageId += 1;
         message.State = SagaState.FlightTimedRollback;
         message.Body = new FlightReply();
         message.CreationDate = DateTime.Now;
         
+        _logger.Debug("to publisher");
         await Publish.Writer.WriteAsync(message, Token);
         _dbReadLock.Release();
         _concurencySemaphore.Release();
@@ -171,8 +188,11 @@ public class FlightHandler
     
     private async Task BookFlight(Message message)
     {
+        _logger.Debug("Book flight");
         if (message.MessageType != MessageType.FlightRequest || message.Body == null) return;
         var requestBody = (FlightRequest)message.Body;
+        
+        _logger.Debug("BookFlight {id} {type} {state}", requestBody.BookFrom, requestBody.BookTo, requestBody.CityFrom);
         
         await _dbReadLock.WaitAsync(Token);
         await using var transaction = await _readDb.Database.BeginTransactionAsync(Token);
@@ -182,6 +202,7 @@ public class FlightHandler
 
         if (booked.Any())
         {
+            _logger.Debug(" booked present");
             var booking = booked.FirstOrDefault();
             if (booking != null)
             {
@@ -189,25 +210,30 @@ public class FlightHandler
                 await _readDb.SaveChangesAsync(Token);
                 await transaction.CommitAsync(Token);
                 
+                _logger.Debug("rsponse creating");
                 message.MessageType = MessageType.OrderReply;
                 message.MessageId += 1;
                 message.State = SagaState.FlightFullAccept;
                 message.Body = new FlightReply();
                 message.CreationDate = DateTime.Now;
         
+                _logger.Debug("to publish");
                 await Publish.Writer.WriteAsync(message, Token);
                 _dbReadLock.Release();
                 _concurencySemaphore.Release();
             }
         }
+        _logger.Debug("rollback");
         await transaction.RollbackAsync(Token);
         
+        _logger.Debug("rsponse creating");
         message.MessageType = MessageType.OrderReply;
         message.MessageId += 1;
         message.State = SagaState.FlightFullFail;
         message.Body = new FlightReply();
         message.CreationDate = DateTime.Now;
         
+        _logger.Debug("to publish");
         await Publish.Writer.WriteAsync(message, Token);
         _dbReadLock.Release();
         _concurencySemaphore.Release();

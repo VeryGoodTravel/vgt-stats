@@ -30,6 +30,8 @@ public class FlightService : IDisposable
     private readonly FlightDbContext _writeDb;
     private readonly FlightDbContext _readDb;
     
+    private Task Publisher { get; set; }
+    
     /// <summary>
     /// Allows tasks cancellation from the outside of the class
     /// </summary>
@@ -75,7 +77,7 @@ public class FlightService : IDisposable
         }
         
         _logger.Info("-------------------------------------------------------------------------------- Created db data ----------------------------------------------------------");
-
+        Publisher = Task.Run(() => RabbitPublisher());
         
         _publish = Channel.CreateUnbounded<Message>(new UnboundedChannelOptions()
             { SingleReader = true, SingleWriter = true, AllowSynchronousContinuations = true });
@@ -141,10 +143,13 @@ public class FlightService : IDisposable
     /// </summary>
     private async Task RabbitPublisher()
     {
+        _logger.Debug("-----------------Rabbit publisher starting");
         while (await _publish.Reader.WaitToReadAsync(Token))
         {
+            _logger.Debug("-----------------Rabbit publisher message");
             var message = await _publish.Reader.ReadAsync(Token);
-
+            _logger.Debug("Recieved message {msg} {id}", message.MessageType.ToString(), message.TransactionId);
+            
             _queues.PublishToOrchestrator( _jsonUtils.Serialize(message));
         }
     }
