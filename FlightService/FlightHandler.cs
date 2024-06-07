@@ -154,10 +154,6 @@ public class FlightHandler
     private async Task TempRollback(Message message)
     {
         _logger.Debug("TempRollback");
-        if (message.MessageType != MessageType.FlightRequest || message.Body == null) return;
-        var requestBody = (FlightRequest)message.Body;
-        
-        _logger.Debug("TempRollback {id} {type} {state}", requestBody.BookFrom, requestBody.BookTo, requestBody.CityFrom);
         
         await _dbReadLock.WaitAsync(Token);
         await using var transaction = await _readDb.Database.BeginTransactionAsync(Token);
@@ -191,10 +187,6 @@ public class FlightHandler
     private async Task BookFlight(Message message)
     {
         _logger.Debug("Book flight");
-        if (message.MessageType != MessageType.FlightRequest || message.Body == null) return;
-        var requestBody = (FlightRequest)message.Body;
-        
-        _logger.Debug("BookFlight {id} {type} {state}", requestBody.BookFrom, requestBody.BookTo, requestBody.CityFrom);
         
         await _dbReadLock.WaitAsync(Token);
         await using var transaction = await _readDb.Database.BeginTransactionAsync(Token);
