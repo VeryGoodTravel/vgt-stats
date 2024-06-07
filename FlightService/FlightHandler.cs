@@ -141,7 +141,7 @@ public class FlightHandler
         _logger.Debug("Creating response");
         message.MessageId += 1;
         message.MessageType = MessageType.PaymentRequest;
-        message.State = SagaState.HotelTimedAccept;
+        message.State = SagaState.FlightTimedAccept;
         message.Body = new PaymentRequest();
         message.CreationDate = DateTime.Now;
         _logger.Debug("Publishing");
