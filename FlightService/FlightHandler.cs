@@ -1,5 +1,6 @@
 using System.Threading.Channels;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using NLog;
 using vgt_saga_flight.Models;
 using vgt_saga_serialization;
@@ -86,8 +87,9 @@ public class FlightHandler
 
     private async Task TempBookFlight(Message message)
     {
-        _logger.Debug("Temp Book");
+        _logger.Debug("Temp Book | {m}", JsonConvert.SerializeObject(message));
         if (message.MessageType != MessageType.FlightRequest || message.Body == null) return;
+        
         var requestBody = (FlightRequest)message.Body;
         
         _logger.Debug("Temp Book {id} {type} {state}", requestBody.BookFrom, requestBody.BookTo, requestBody.CityFrom);
