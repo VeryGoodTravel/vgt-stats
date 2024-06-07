@@ -103,7 +103,7 @@ public class FlightHandler
             .FirstOrDefaultAsync(p => p.DepartureAirport.AirportCity.Equals(requestBody.CityFrom)
                                       && p.ArrivalAirport.AirportCity.Equals(requestBody.CityTo)
                                       && p.Amount - requestBody.PassangerCount >= 0
-                                      && p.FlightTime.Equals(requestBody.BookFrom));
+                                      && p.FlightTime.Date == requestBody.BookFrom.Value.Date);
         
         _logger.Debug("After query");
         
