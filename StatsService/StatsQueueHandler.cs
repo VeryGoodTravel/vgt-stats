@@ -4,7 +4,7 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
 
-namespace vgt_saga_flight.FlightService;
+namespace vgt_stats.StatsService;
 
 /// <summary>
 /// Class handling RabbitMQ connections, messages and events;
@@ -27,7 +27,7 @@ namespace vgt_saga_flight.FlightService;
 /// </list>
 /// </p>
 /// </summary>
-public class FlightQueueHandler : IDisposable
+public class StatsQueueHandler : IDisposable
 {
     private const string LoggerPrefix = "OrderQueue| ";
     private readonly ConnectionFactory _factory;
@@ -35,8 +35,8 @@ public class FlightQueueHandler : IDisposable
     private readonly Logger _logger;
 
     // channels of the queues
-    private readonly IModel _sagaToOrchestrator;
-    private readonly IModel _sagaFromOrchestrator;
+    private readonly IModel _probablyAnswers;
+    private readonly IModel _statsFromOrders;
 
     // replies consumer
     private EventingBasicConsumer? _consumer;
@@ -53,7 +53,7 @@ public class FlightQueueHandler : IDisposable
     /// <param name="log"> logger to log to </param>
     /// <exception cref="ArgumentException"> Which variable is missing in the configuration </exception>
     /// <exception cref="BrokerUnreachableException"> Couldn't establish connection </exception>
-    public FlightQueueHandler(IConfiguration config, Logger log)
+    public StatsQueueHandler(IConfiguration config, Logger log)
     {
         _logger = log;
         _logger.Debug("{p}Initializing RabbitMq connections", LoggerPrefix);
@@ -77,15 +77,15 @@ public class FlightQueueHandler : IDisposable
 
         _queueNames = GetQueuesFromConfig(config);
 
-        _sagaToOrchestrator = _connection.CreateModel();
-        _sagaToOrchestrator.QueueDeclare(_queueNames[0],
+        _probablyAnswers = _connection.CreateModel();
+        _probablyAnswers.QueueDeclare(_queueNames[0],
             durable: true,
             exclusive: false,
             autoDelete: false,
             arguments: new Dictionary<string, object>());
 
-        _sagaFromOrchestrator = _connection.CreateModel();
-        _sagaFromOrchestrator.QueueDeclare(_queueNames[1],
+        _statsFromOrders = _connection.CreateModel();
+        _statsFromOrders.QueueDeclare(_queueNames[1],
             durable: true,
             exclusive: false,
             autoDelete: false,
@@ -105,7 +105,7 @@ public class FlightQueueHandler : IDisposable
         _logger.Debug("{p}Response: {res}", LoggerPrefix, body);
         var bodyBytes = Encoding.UTF8.GetBytes(body);
         
-        _sagaToOrchestrator.BasicPublish(string.Empty, _queueNames[0], null, bodyBytes);
+        _probablyAnswers.BasicPublish(string.Empty, _queueNames[0], null, bodyBytes);
     }
 
     /// <summary>
@@ -115,8 +115,8 @@ public class FlightQueueHandler : IDisposable
     /// <param name="state"> ack/reject </param>
     public void PublishTagResponse(BasicDeliverEventArgs ea, bool state)
     {
-        if (state) _sagaFromOrchestrator.BasicAck(ea.DeliveryTag, false);
-        else _sagaFromOrchestrator.BasicReject(ea.DeliveryTag, false);
+        if (state) _statsFromOrders.BasicAck(ea.DeliveryTag, false);
+        else _statsFromOrders.BasicReject(ea.DeliveryTag, false);
     }
     
 
@@ -124,13 +124,13 @@ public class FlightQueueHandler : IDisposable
     /// Create queue consumer and hook to the event specifying incoming requests.
     /// </summary>
     /// <param name="handler"> handler to assign to the consumer event </param>
-    public void AddRepliesConsumer(EventHandler<BasicDeliverEventArgs> handler)
+    public void AddStatsConsumer(EventHandler<BasicDeliverEventArgs> handler)
     {
-        _consumer = new EventingBasicConsumer(_sagaFromOrchestrator);
+        _consumer = new EventingBasicConsumer(_statsFromOrders);
         _logger.Debug("{p}Added Replies consumer", LoggerPrefix);
         _consumer.Received += handler;
         _logger.Debug("{p}Added Replies event handler", LoggerPrefix);
-        _sagaFromOrchestrator.BasicConsume(queue: _queueNames[1],
+        _statsFromOrders.BasicConsume(queue: _queueNames[1],
             autoAck: false,
             consumer: _consumer);
     }
@@ -144,15 +144,14 @@ public class FlightQueueHandler : IDisposable
     /// <exception cref="ArgumentException"> Which variable is missing </exception>
     private List<string> GetQueuesFromConfig(IConfiguration config)
     {
-        _logger.Error(config.GetValue<string?>("RABBIT_REPLIES"));
         var result = new List<string>
         {
-            string.IsNullOrEmpty(config.GetValue<string?>("RABBIT_REPLIES"))
-                ? ThrowException<string>("RABBIT_REPLIES")
-                : config.GetValue<string?>("RABBIT_REPLIES")!,
-            string.IsNullOrEmpty(config.GetValue<string?>("RABBIT_FLIGHT"))
-                ? ThrowException<string>("RABBIT_FLIGHT")
-                : config.GetValue<string?>("RABBIT_FLIGHT")!,
+            string.IsNullOrEmpty(config.GetValue<string?>("BACKEND_REPLIES"))
+                ? ThrowException<string>("BACKEND_REPLIES")
+                : config.GetValue<string?>("BACKEND_REPLIES")!,
+            string.IsNullOrEmpty(config.GetValue<string?>("RABBIT_STATS"))
+                ? ThrowException<string>("RABBIT_STATS")
+                : config.GetValue<string?>("RABBIT_STATS")!,
         };
 
         return result;
@@ -210,11 +209,11 @@ public class FlightQueueHandler : IDisposable
     /// <inheritdoc/>
     public void Dispose()
     {
-        _sagaToOrchestrator.Close();
-        _sagaFromOrchestrator.Close();
+        _probablyAnswers.Close();
+        _statsFromOrders.Close();
 
-        _sagaToOrchestrator.Dispose();
-        _sagaFromOrchestrator.Dispose();
+        _probablyAnswers.Dispose();
+        _statsFromOrders.Dispose();
         
         _connection.Close();
         _connection.Dispose();

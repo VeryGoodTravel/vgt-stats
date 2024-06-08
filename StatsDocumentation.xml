@@ -1,37 +1,37 @@
 <?xml version="1.0"?>
 <doc>
     <assembly>
-        <name>vgt-saga-flight</name>
+        <name>vgt-stats</name>
     </assembly>
     <members>
-        <member name="T:vgt_saga_flight.FlightService.FlightHandler">
+        <member name="T:vgt_saga_flight.StatsService.StatsHandler">
             <summary>
             Handles saga flight requests
             Creates the appropriate saga messages
             Handles the data in messages
             </summary>
         </member>
-        <member name="P:vgt_saga_flight.FlightService.FlightHandler.Requests">
+        <member name="P:vgt_saga_flight.StatsService.StatsHandler.Requests">
             <summary>
             Requests from the orchestrator
             </summary>
         </member>
-        <member name="P:vgt_saga_flight.FlightService.FlightHandler.Publish">
+        <member name="P:vgt_saga_flight.StatsService.StatsHandler.Publish">
             <summary>
             Messages that need to be sent out to the queues
             </summary>
         </member>
-        <member name="P:vgt_saga_flight.FlightService.FlightHandler.RequestsTask">
+        <member name="P:vgt_saga_flight.StatsService.StatsHandler.RequestsTask">
             <summary>
             Task of the requests handler
             </summary>
         </member>
-        <member name="P:vgt_saga_flight.FlightService.FlightHandler.Token">
+        <member name="P:vgt_saga_flight.StatsService.StatsHandler.Token">
             <summary>
             Token allowing tasks cancellation from the outside of the class
             </summary>
         </member>
-        <member name="M:vgt_saga_flight.FlightService.FlightHandler.#ctor(System.Threading.Channels.Channel{vgt_saga_serialization.Message},System.Threading.Channels.Channel{vgt_saga_serialization.Message},vgt_saga_flight.Models.FlightDbContext,vgt_saga_flight.Models.FlightDbContext,NLog.Logger)">
+        <member name="M:vgt_saga_flight.StatsService.StatsHandler.#ctor(System.Threading.Channels.Channel{vgt_saga_serialization.Message},System.Threading.Channels.Channel{vgt_saga_serialization.Message},vgt_saga_flight.Models.StatDbContext,vgt_saga_flight.Models.StatDbContext,NLog.Logger)">
             <summary>
             Default constructor of the flight handler class
             handles data and prepares messages concerning saga flights availibity and booking
@@ -40,7 +40,7 @@
             <param name="publish"> Queue with messages that need to be published to RabbitMQ </param>
             <param name="log"> logger to log to </param>
         </member>
-        <member name="T:vgt_saga_flight.FlightService.FlightQueueHandler">
+        <member name="T:vgt_saga_flight.StatsService.StatsQueueHandler">
             <summary>
             Class handling RabbitMQ connections, messages and events;
             all concerning SAGA transactions with an orchestrator.
@@ -63,7 +63,7 @@
             </p>
             </summary>
         </member>
-        <member name="M:vgt_saga_flight.FlightService.FlightQueueHandler.#ctor(Microsoft.Extensions.Configuration.IConfiguration,NLog.Logger)">
+        <member name="M:vgt_saga_flight.StatsService.StatsQueueHandler.#ctor(Microsoft.Extensions.Configuration.IConfiguration,NLog.Logger)">
             <summary>
             Constructor of the RabbitMQ handling class.
             Initializes RabbitMQ handling object.
@@ -75,26 +75,26 @@
             <exception cref="T:System.ArgumentException"> Which variable is missing in the configuration </exception>
             <exception cref="T:RabbitMQ.Client.Exceptions.BrokerUnreachableException"> Couldn't establish connection </exception>
         </member>
-        <member name="M:vgt_saga_flight.FlightService.FlightQueueHandler.PublishToOrchestrator(System.String)">
+        <member name="M:vgt_saga_flight.StatsService.StatsQueueHandler.PublishToOrchestrator(System.String)">
             <summary>
             Publish saga message to Orchestrator queue
             </summary>
             <param name="body"> json body of the message to send </param>
         </member>
-        <member name="M:vgt_saga_flight.FlightService.FlightQueueHandler.PublishTagResponse(RabbitMQ.Client.Events.BasicDeliverEventArgs,System.Boolean)">
+        <member name="M:vgt_saga_flight.StatsService.StatsQueueHandler.PublishTagResponse(RabbitMQ.Client.Events.BasicDeliverEventArgs,System.Boolean)">
             <summary>
             Handles RabbitMQ message tag and posts the acceptance or rejection,
             </summary>
             <param name="ea"> tag to answer </param>
             <param name="state"> ack/reject </param>
         </member>
-        <member name="M:vgt_saga_flight.FlightService.FlightQueueHandler.AddRepliesConsumer(System.EventHandler{RabbitMQ.Client.Events.BasicDeliverEventArgs})">
+        <member name="M:vgt_saga_flight.StatsService.StatsQueueHandler.AddStatsConsumer(System.EventHandler{RabbitMQ.Client.Events.BasicDeliverEventArgs})">
             <summary>
             Create queue consumer and hook to the event specifying incoming requests.
             </summary>
             <param name="handler"> handler to assign to the consumer event </param>
         </member>
-        <member name="M:vgt_saga_flight.FlightService.FlightQueueHandler.GetQueuesFromConfig(Microsoft.Extensions.Configuration.IConfiguration)">
+        <member name="M:vgt_saga_flight.StatsService.StatsQueueHandler.GetQueuesFromConfig(Microsoft.Extensions.Configuration.IConfiguration)">
             <summary>
             Get the list of all saga queues defined in the configuration.
             Logs, Creates and Throws ArgumentError if a queue name is not present.
@@ -103,7 +103,7 @@
             <returns> List of queue names </returns>
             <exception cref="T:System.ArgumentException"> Which variable is missing </exception>
         </member>
-        <member name="M:vgt_saga_flight.FlightService.FlightQueueHandler.GetConnectionFactoryFromConfig(Microsoft.Extensions.Configuration.IConfiguration)">
+        <member name="M:vgt_saga_flight.StatsService.StatsQueueHandler.GetConnectionFactoryFromConfig(Microsoft.Extensions.Configuration.IConfiguration)">
             <summary>
             Creates connection factory to the RabbitMQ
             based on the data specified in the configuration file or env variables
@@ -112,7 +112,7 @@
             <returns> ConnectionFactory with specified connection params </returns>
             <exception cref="T:System.ArgumentException"> Which variable is missing </exception>
         </member>
-        <member name="M:vgt_saga_flight.FlightService.FlightQueueHandler.ThrowException``1(System.String)">
+        <member name="M:vgt_saga_flight.StatsService.StatsQueueHandler.ThrowException``1(System.String)">
             <summary>
             Logs, creates and throws the exception that the specified variable is not present in the config
             </summary>
@@ -121,24 +121,24 @@
             <returns></returns>
             <exception cref="T:System.ArgumentException"> Which variable is missing </exception>
         </member>
-        <member name="M:vgt_saga_flight.FlightService.FlightQueueHandler.Dispose">
+        <member name="M:vgt_saga_flight.StatsService.StatsQueueHandler.Dispose">
             <inheritdoc/>
         </member>
-        <member name="T:vgt_saga_flight.FlightService.FlightService">
+        <member name="T:vgt_saga_flight.StatsService.StatsService">
             <summary>
             Saga Payment service;
             handles all payments in the transaction.
             </summary>
         </member>
-        <member name="P:vgt_saga_flight.FlightService.FlightService.Token">
+        <member name="P:vgt_saga_flight.StatsService.StatsService.Token">
             <summary>
             Allows tasks cancellation from the outside of the class
             </summary>
         </member>
-        <member name="M:vgt_saga_flight.FlightService.FlightService.#ctor(Microsoft.Extensions.Configuration.IConfiguration,Microsoft.Extensions.Logging.ILoggerFactory)">
+        <member name="M:vgt_saga_flight.StatsService.StatsService.#ctor(Microsoft.Extensions.Configuration.IConfiguration,Microsoft.Extensions.Logging.ILoggerFactory)">
             <summary>
-            Constructor of the FlightService class.
-            Initializes FlightService object.
+            Constructor of the StatsService class.
+            Initializes StatsService object.
             Creates, initializes and opens connections to the database and rabbitmq
             based on configuration data present and handled by specified handling objects.
             Throws propagated exceptions if the configuration data is nowhere to be found.
@@ -148,12 +148,12 @@
             <exception cref="T:System.ArgumentException"> Which variable is missing in the configuration </exception>
             <exception cref="T:RabbitMQ.Client.Exceptions.BrokerUnreachableException"> Couldn't establish connection with RabbitMQ </exception>
         </member>
-        <member name="M:vgt_saga_flight.FlightService.FlightService.RabbitPublisher">
+        <member name="M:vgt_saga_flight.StatsService.StatsService.RabbitPublisher">
             <summary>
             Publishes made messages to the right queues
             </summary>
         </member>
-        <member name="M:vgt_saga_flight.FlightService.FlightService.SagaOrdersEventHandler(System.Object,RabbitMQ.Client.Events.BasicDeliverEventArgs)">
+        <member name="M:vgt_saga_flight.StatsService.StatsService.SagaOrdersEventHandler(System.Object,RabbitMQ.Client.Events.BasicDeliverEventArgs)">
             <summary>
             Event Handler that hooks to the event of the queue consumer.
             Handles incoming replies from the RabbitMQ and routes them to the appropriate tasks.
@@ -161,7 +161,7 @@
             <param name="sender"></param>
             <param name="ea"></param>
         </member>
-        <member name="M:vgt_saga_flight.FlightService.FlightService.Dispose">
+        <member name="M:vgt_saga_flight.StatsService.StatsService.Dispose">
             <inheritdoc/>
         </member>
         <member name="T:vgt_saga_flight.Migrations.Initial">
@@ -176,31 +176,31 @@
         <member name="M:vgt_saga_flight.Migrations.Initial.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
-        <member name="T:vgt_saga_flight.Models.FlightDbContext">
+        <member name="T:vgt_saga_flight.Models.StatDbContext">
             <inheritdoc />
         </member>
-        <member name="P:vgt_saga_flight.Models.FlightDbContext.Airports">
+        <member name="P:vgt_saga_flight.Models.StatDbContext.Airports">
             <summary>
             Set of Database Airports entities mapped to AirportDb objects
             </summary>
         </member>
-        <member name="P:vgt_saga_flight.Models.FlightDbContext.Flights">
+        <member name="P:vgt_saga_flight.Models.StatDbContext.Flights">
             <summary>
             Set of Database Flight entities mapped to FlightDb objects
             </summary>
         </member>
-        <member name="P:vgt_saga_flight.Models.FlightDbContext.Bookings">
+        <member name="P:vgt_saga_flight.Models.StatDbContext.Bookings">
             <summary>
             Set of Database Booking entities mapped to Booking objects
             </summary>
         </member>
-        <member name="M:vgt_saga_flight.Models.FlightDbContext.#ctor(Microsoft.EntityFrameworkCore.DbContextOptions{vgt_saga_flight.Models.FlightDbContext})">
+        <member name="M:vgt_saga_flight.Models.StatDbContext.#ctor(Microsoft.EntityFrameworkCore.DbContextOptions{vgt_saga_flight.Models.StatDbContext})">
             <inheritdoc />
         </member>
-        <member name="M:vgt_saga_flight.Models.FlightDbContext.#ctor(Microsoft.EntityFrameworkCore.DbContextOptions{vgt_saga_flight.Models.FlightDbContext},System.String)">
+        <member name="M:vgt_saga_flight.Models.StatDbContext.#ctor(Microsoft.EntityFrameworkCore.DbContextOptions{vgt_saga_flight.Models.StatDbContext},System.String)">
             <inheritdoc />
         </member>
-        <member name="M:vgt_saga_flight.Models.FlightDbContext.OnConfiguring(Microsoft.EntityFrameworkCore.DbContextOptionsBuilder)">
+        <member name="M:vgt_saga_flight.Models.StatDbContext.OnConfiguring(Microsoft.EntityFrameworkCore.DbContextOptionsBuilder)">
             <inheritdoc />
         </member>
         <member name="T:vgt_saga_flight.Models.Booking">

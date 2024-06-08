@@ -2,12 +2,12 @@
 
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
-        <RootNamespace>vgt_saga_flight</RootNamespace>
+        <RootNamespace>vgt_stats</RootNamespace>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <DocumentationFile>SagaFlightDocumentation.xml</DocumentationFile>
+        <DocumentationFile>StatsDocumentation.xml</DocumentationFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -44,12 +44,12 @@
     </ItemGroup>
 
     <ItemGroup>
-        <_ContentIncludedByDefault Remove="vgt-saga-flight\appsettings.Development.json"/>
-        <_ContentIncludedByDefault Remove="vgt-saga-flight\appsettings.json"/>
-        <_ContentIncludedByDefault Remove="vgt-saga-flight\obj\project.assets.json"/>
-        <_ContentIncludedByDefault Remove="vgt-saga-flight\obj\project.packagespec.json"/>
-        <_ContentIncludedByDefault Remove="vgt-saga-flight\obj\vgt-saga-flight.csproj.nuget.dgspec.json"/>
-        <_ContentIncludedByDefault Remove="vgt-saga-flight\Properties\launchSettings.json"/>
+        <_ContentIncludedByDefault Remove="vgt-stats\appsettings.Development.json"/>
+        <_ContentIncludedByDefault Remove="vgt-stats\appsettings.json"/>
+        <_ContentIncludedByDefault Remove="vgt-stats\obj\project.assets.json"/>
+        <_ContentIncludedByDefault Remove="vgt-stats\obj\project.packagespec.json"/>
+        <_ContentIncludedByDefault Remove="vgt-stats\obj\vgt-stats.csproj.nuget.dgspec.json"/>
+        <_ContentIncludedByDefault Remove="vgt-stats\Properties\launchSettings.json"/>
     </ItemGroup>
 
     <ItemGroup>

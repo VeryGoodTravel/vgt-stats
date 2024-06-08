@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
-namespace vgt_saga_flight.Models;
+namespace vgt_stats.Models;
 
 /// <inheritdoc />
-public class FlightDbContext : DbContext
+public class StatDbContext : DbContext
 {
     private string _connectionString = "";
     
@@ -22,13 +22,13 @@ public class FlightDbContext : DbContext
     public DbSet<Booking> Bookings { get; set; }
 
     /// <inheritdoc />
-    public FlightDbContext(DbContextOptions<FlightDbContext> options)
+    public StatDbContext(DbContextOptions<StatDbContext> options)
         : base(options)
     {
     }
     
     /// <inheritdoc />
-    public FlightDbContext(DbContextOptions<FlightDbContext> options, string conn)
+    public StatDbContext(DbContextOptions<StatDbContext> options, string conn)
         : base(options)
     {
         _connectionString = conn;

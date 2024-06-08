@@ -1,23 +1,22 @@
 using System.Threading.Channels;
 using Microsoft.EntityFrameworkCore;
 using NEventStore;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using NLog;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
-using vgt_saga_flight.Models;
+using vgt_saga_flight;
 using vgt_saga_serialization;
+using vgt_stats.Models;
 
-namespace vgt_saga_flight.FlightService;
+namespace vgt_stats.StatsService;
 
 /// <summary>
 /// Saga Payment service;
 /// handles all payments in the transaction.
 /// </summary>
-public class FlightService : IDisposable
+public class StatsService : IDisposable
 {
-    private readonly FlightQueueHandler _queues;
+    private readonly StatsQueueHandler _queues;
     private readonly Logger _logger;
     private readonly IConfiguration _config;
     private readonly Utils _jsonUtils;
@@ -25,10 +24,10 @@ public class FlightService : IDisposable
     
     private readonly Channel<Message> _payments;
     private readonly Channel<Message> _publish;
-    private readonly FlightHandler _flightHandler;
+    private readonly StatsHandler _statsHandler;
 
-    private readonly FlightDbContext _writeDb;
-    private readonly FlightDbContext _readDb;
+    private readonly StatDbContext _writeDb;
+    private readonly StatDbContext _readDb;
     
     private Task Publisher { get; set; }
     
@@ -38,8 +37,8 @@ public class FlightService : IDisposable
     public CancellationToken Token { get; } = new();
 
     /// <summary>
-    /// Constructor of the FlightService class.
-    /// Initializes FlightService object.
+    /// Constructor of the StatsService class.
+    /// Initializes StatsService object.
     /// Creates, initializes and opens connections to the database and rabbitmq
     /// based on configuration data present and handled by specified handling objects.
     /// Throws propagated exceptions if the configuration data is nowhere to be found.
@@ -48,7 +47,7 @@ public class FlightService : IDisposable
     /// <param name="lf"> Logger factory to use by the event store </param>
     /// <exception cref="ArgumentException"> Which variable is missing in the configuration </exception>
     /// <exception cref="BrokerUnreachableException"> Couldn't establish connection with RabbitMQ </exception>
-    public FlightService(IConfiguration config, ILoggerFactory lf)
+    public StatsService(IConfiguration config, ILoggerFactory lf)
     {
         _logger = LogManager.GetCurrentClassLogger();
         _config = config;
@@ -58,84 +57,32 @@ public class FlightService : IDisposable
             { SingleReader = true, SingleWriter = true, AllowSynchronousContinuations = true });
         _logger.Info("-------------------------------------------------------------------------------- Creating service connection ----------------------------------------------------------");
 
-        var connStr = SecretUtils.GetConnectionString(_config, "DB_NAME_FLIGHT", _logger);
-        var op = new DbContextOptions<FlightDbContext>();
+        var connStr = SecretUtils.GetConnectionString(_config, "DB_NAME_STATS", _logger);
+        var op = new DbContextOptions<StatDbContext>();
         //op.UseLoggerFactory(lf);
         _logger.Info("-------------------------------------------------------------------------------- creting write db context ----------------------------------------------------------");
 
-        _writeDb = new FlightDbContext(op, connStr);
+        _writeDb = new StatDbContext(op, connStr);
         
         _logger.Info("-------------------------------------------------------------------------------- creating read db context ----------------------------------------------------------");
-        _readDb = new FlightDbContext(op, connStr);
+        _readDb = new StatDbContext(op, connStr);
         
         _logger.Info("-------------------------------------------------------------------------------- Created db connections ----------------------------------------------------------");
-
         
-        if (!_readDb.Flights.Any())
-        {
-            CreateData().Wait(); 
-        }
         
         _logger.Info("-------------------------------------------------------------------------------- Created db data ----------------------------------------------------------");
-        Publisher = Task.Run(() => RabbitPublisher());
-        
         _publish = Channel.CreateUnbounded<Message>(new UnboundedChannelOptions()
             { SingleReader = true, SingleWriter = true, AllowSynchronousContinuations = true });
         
-        _flightHandler = new FlightHandler(_payments, _publish, _writeDb, _readDb, _logger);
+        Publisher = Task.Run(() => RabbitPublisher());
+        
 
-        _queues = new FlightQueueHandler(_config, _logger);
         
-        _queues.AddRepliesConsumer(SagaOrdersEventHandler);
-    }
-    
-    private async Task CreateData()
-    {
-        using StreamReader departure = new("./departure_airports.json");
-        var json = await departure.ReadToEndAsync(Token);
-        Dictionary<string,string> departureAirports = JsonConvert.DeserializeObject<Dictionary<string,string>>(json) ?? [];
-        
-        using StreamReader arrival = new("./arrival_airports.json");
-        var json2 = await arrival.ReadToEndAsync(Token);
-        Dictionary<string,string> arrivalAirports = JsonConvert.DeserializeObject<Dictionary<string,string>>(json2) ?? [];
-        var rnd = new Random();
-        
-        
-        var departureDbAirports = departureAirports.Select(airport => new AirportDb { AirportCode = airport.Key, AirportCity = airport.Value, IsDeparture = true }).ToList();
-        _writeDb.AddRange(departureDbAirports);
-        var arrivalDbAirports = arrivalAirports.Select(airport => new AirportDb { AirportCode = airport.Key, AirportCity = airport.Value, IsDeparture = false }).ToList();
-        _writeDb.AddRange(arrivalDbAirports);
+        _statsHandler = new StatsHandler(_payments, _publish, _writeDb, _readDb, _logger);
 
-        List<FlightDb> flights = [];
-        foreach (var airport in departureDbAirports)
-        {
-            for (var i = 0; i < rnd.Next(1000, 1500); i++)
-            {
-                _writeDb.Add(new FlightDb
-                {
-                    Amount = rnd.Next(5, 25),
-                    FlightTime = DateTime.Now + TimeSpan.FromMinutes(rnd.Next(0, 200000)),
-                    ArrivalAirport = arrivalDbAirports[rnd.Next(0, arrivalDbAirports.Count - 1)],
-                    DepartureAirport = airport,
-                    Price = rnd.Next(80, 250)
-                });
-            }
-        }
-        foreach (var airport in arrivalDbAirports)
-        {
-            for (var i = 0; i < rnd.Next(200, 1000); i++)
-            {
-                _writeDb.Add(new FlightDb
-                {
-                    Amount = rnd.Next(5, 25),
-                    FlightTime = DateTime.Now + TimeSpan.FromMinutes(rnd.Next(0, 200000)),
-                    ArrivalAirport = departureDbAirports[rnd.Next(0, departureDbAirports.Count - 1)],
-                    DepartureAirport = airport,
-                    Price = rnd.Next(80, 250)
-                });
-            }
-        }
-        await _writeDb.SaveChangesAsync(Token);
+        _queues = new StatsQueueHandler(_config, _logger);
+        
+        _queues.AddStatsConsumer(SagaOrdersEventHandler);
     }
 
     /// <summary>

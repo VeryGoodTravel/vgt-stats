@@ -2,18 +2,18 @@ using System.Threading.Channels;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using NLog;
-using vgt_saga_flight.Models;
 using vgt_saga_serialization;
 using vgt_saga_serialization.MessageBodies;
+using vgt_stats.Models;
 
-namespace vgt_saga_flight.FlightService;
+namespace vgt_stats.StatsService;
 
 /// <summary>
 /// Handles saga flight requests
 /// Creates the appropriate saga messages
 /// Handles the data in messages
 /// </summary>
-public class FlightHandler
+public class StatsHandler
 {
     /// <summary>
     /// Requests from the orchestrator
@@ -27,8 +27,8 @@ public class FlightHandler
     
     private Logger _logger;
 
-    private readonly FlightDbContext _writeDb;
-    private readonly FlightDbContext _readDb;
+    private readonly StatDbContext _writeDb;
+    private readonly StatDbContext _readDb;
     
     /// <summary>
     /// Task of the requests handler
@@ -52,7 +52,7 @@ public class FlightHandler
     /// <param name="requests"> Queue with the requests from the orchestrator </param>
     /// <param name="publish"> Queue with messages that need to be published to RabbitMQ </param>
     /// <param name="log"> logger to log to </param>
-    public FlightHandler(Channel<Message> requests, Channel<Message> publish, FlightDbContext writeDb, FlightDbContext readDb, Logger log)
+    public StatsHandler(Channel<Message> requests, Channel<Message> publish, StatDbContext writeDb, StatDbContext readDb, Logger log)
     {
         _logger = log;
         Requests = requests;
@@ -73,6 +73,7 @@ public class FlightHandler
 
             _logger.Debug("Handling message {id} {type} {state}", message.MessageId, message.MessageType, message.State);
             
+            // pilnuje ile wątków odpalę, to możesz całe już zmienić, to etap gdzie zajmuję sę otrzymaną wiadomością
             await _concurencySemaphore.WaitAsync(Token);
 
             _ = message.State switch

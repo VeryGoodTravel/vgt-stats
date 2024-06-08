@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace vgt_saga_flight.Models;
+namespace vgt_stats.Models;
 
 public class AirportHttp
 {

@@ -6,8 +6,8 @@ using NLog;
 using NLog.Extensions.Logging;
 using RabbitMQ.Client.Exceptions;
 using vgt_saga_flight;
-using vgt_saga_flight.FlightService;
-using vgt_saga_flight.Models;
+using vgt_stats.Models;
+using vgt_stats.StatsService;
 using ILogger = NLog.ILogger;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -48,7 +48,7 @@ catch (InvalidDataException e)
 
 var logger = LogManager.GetCurrentClassLogger();
 
-builder.Services.AddDbContext<FlightDbContext>(options => options.UseNpgsql(SecretUtils.GetConnectionString(builder.Configuration, "DB_NAME_FLIGHT", logger)));
+builder.Services.AddDbContext<StatDbContext>(options => options.UseNpgsql(SecretUtils.GetConnectionString(builder.Configuration, "DB_NAME_STATS", logger)));
 
 var app = builder.Build();
 
@@ -65,7 +65,7 @@ if (app.Environment.IsDevelopment())
 
 await using var scope = app.Services.CreateAsyncScope();
 {
-    await using var db = scope.ServiceProvider.GetService<FlightDbContext>();
+    await using var db = scope.ServiceProvider.GetService<StatDbContext>();
     {
         logger.Info("CAN CONNECT {v}" ,db.Database.CanConnect());
         logger.Info("-------------------------------------------------------------------------------- Before deletion ----------------------------------------------------------");
@@ -81,13 +81,13 @@ logger.Info("-------------------------------------------------------------------
 
 app.UseHttpsRedirection();
 
-FlightService? hotelService = null;
+StatsService? hotelService = null;
 
 try
 {
     logger.Info("-------------------------------------------------------------------------------- Trying setup of the service ----------------------------------------------------------");
 
-    hotelService = new FlightService(app.Configuration, lf);
+    hotelService = new StatsService(app.Configuration, lf);
 }
 catch (BrokerUnreachableException)
 {
@@ -105,7 +105,7 @@ catch (ArgumentException)
 app.MapPost("/flights", ([FromBody]FlightsRequestHttp request) =>
     {
         using var scope = app.Services.CreateAsyncScope();
-        using var db = scope.ServiceProvider.GetService<FlightDbContext>();
+        using var db = scope.ServiceProvider.GetService<StatDbContext>();
 
         logger.Info("fligths request date {v}, departure {d} and arrival {a}" ,
             request.DepartureDateDt(), request.DepartureAirportCodes, request.ArrivalAirportCodes);
@@ -142,7 +142,7 @@ app.MapPost("/flights", ([FromBody]FlightsRequestHttp request) =>
 app.MapPost("/flight", ([FromBody]FlightRequestHttp request) =>
     {
         using var scope = app.Services.CreateAsyncScope();
-        using var db = scope.ServiceProvider.GetService<FlightDbContext>();
+        using var db = scope.ServiceProvider.GetService<StatDbContext>();
 
         logger.Info("fligth request {v}" ,request);
         
@@ -173,7 +173,7 @@ app.MapPost("/flight", ([FromBody]FlightRequestHttp request) =>
 app.MapGet("/departure_airports", () =>
     {
         using var scope = app.Services.CreateAsyncScope();
-        using var db = scope.ServiceProvider.GetService<FlightDbContext>();
+        using var db = scope.ServiceProvider.GetService<StatDbContext>();
 
         var dbFlights = from airports in db.Airports
             where airports.IsDeparture == true
