@@ -141,6 +141,7 @@ catch (ArgumentException)
 
 app.MapGet("/stats", () =>
     {
+        logger.Info("Received /stats request");
         using var scope = app.Services.CreateAsyncScope();
         using var db = scope.ServiceProvider.GetService<StatDbContext>();
 
