@@ -102,101 +102,57 @@ catch (ArgumentException)
     GracefulExit(app, logger, [hotelService]);
 }
 
-app.MapPost("/flights", ([FromBody]FlightsRequestHttp request) =>
+// app.MapPost("/flights", ([FromBody]FlightsRequestHttp request) =>
+//     {
+//         using var scope = app.Services.CreateAsyncScope();
+//         using var db = scope.ServiceProvider.GetService<StatDbContext>();
+//
+//         logger.Info("fligths request date {v}, departure {d} and arrival {a}" ,
+//             request.DepartureDateDt(), request.DepartureAirportCodes, request.ArrivalAirportCodes);
+//         
+//         var dbFlights = from flights in db.Flights
+//             where request.ArrivalAirportCodes.Contains(flights.ArrivalAirport.AirportCode)
+//                   && request.DepartureAirportCodes.Contains(flights.DepartureAirport.AirportCode)
+//                   && flights.FlightTime.Date == request.DepartureDateDt()
+//                   && (from m in db.Bookings
+//                       where m.Flight == flights
+//                       select m.Amount).Sum() + request.NumberOfPassengers < flights.Amount
+//             select flights;
+//
+//         var results = dbFlights.Include(p => p.DepartureAirport).Include(p => p.ArrivalAirport).ToList();
+//         logger.Info("fligths results count {c} and {v} " , results.Count,results);
+//
+//         return (from flight in results
+//             where flight != null
+//             select new FlightResponse
+//             {
+//                 Available = true,
+//                 FlightId = flight.FlightDbId.ToString(),
+//                 DepartureAirportCode = flight.DepartureAirport.AirportCode,
+//                 DepartureAirportName = flight.DepartureAirport.AirportCity,
+//                 ArrivalAirportCode = flight.ArrivalAirport.AirportCode,
+//                 ArrivalAirportName = flight.ArrivalAirport.AirportCity,
+//                 DepartureDate = flight.FlightTime.ToString(CultureInfo.InvariantCulture),
+//                 Price = flight.Price
+//             }).ToList();
+//     })
+//     .WithName("GetFlights")
+//     .WithOpenApi();
+
+app.MapGet("/stats", () =>
     {
         using var scope = app.Services.CreateAsyncScope();
         using var db = scope.ServiceProvider.GetService<StatDbContext>();
 
-        logger.Info("fligths request date {v}, departure {d} and arrival {a}" ,
-            request.DepartureDateDt(), request.DepartureAirportCodes, request.ArrivalAirportCodes);
-        
-        var dbFlights = from flights in db.Flights
-            where request.ArrivalAirportCodes.Contains(flights.ArrivalAirport.AirportCode)
-                  && request.DepartureAirportCodes.Contains(flights.DepartureAirport.AirportCode)
-                  && flights.FlightTime.Date == request.DepartureDateDt()
-                  && (from m in db.Bookings
-                      where m.Flight == flights
-                      select m.Amount).Sum() + request.NumberOfPassengers < flights.Amount
-            select flights;
-
-        var results = dbFlights.Include(p => p.DepartureAirport).Include(p => p.ArrivalAirport).ToList();
-        logger.Info("fligths results count {c} and {v} " , results.Count,results);
-
-        return (from flight in results
-            where flight != null
-            select new FlightResponse
-            {
-                Available = true,
-                FlightId = flight.FlightDbId.ToString(),
-                DepartureAirportCode = flight.DepartureAirport.AirportCode,
-                DepartureAirportName = flight.DepartureAirport.AirportCity,
-                ArrivalAirportCode = flight.ArrivalAirport.AirportCode,
-                ArrivalAirportName = flight.ArrivalAirport.AirportCity,
-                DepartureDate = flight.FlightTime.ToString(CultureInfo.InvariantCulture),
-                Price = flight.Price
-            }).ToList();
-    })
-    .WithName("GetFlights")
-    .WithOpenApi();
-
-app.MapPost("/flight", ([FromBody]FlightRequestHttp request) =>
-    {
-        using var scope = app.Services.CreateAsyncScope();
-        using var db = scope.ServiceProvider.GetService<StatDbContext>();
-
-        logger.Info("fligth request {v}" ,request);
-        
-        var dbFlights = from flights in db.Flights
-            where request.FlightId.Equals(flights.FlightDbId.ToString())
-                  && request.NumberOfPassengers <= flights.Amount
-            select flights;
-
-        var flight = dbFlights.Include(p => p.DepartureAirport).Include(p => p.ArrivalAirport).FirstOrDefault();
-        
-        logger.Info("fligth result {v}" ,flight);
-        
-       return new FlightResponse
-            {
-                Available = true,
-                FlightId = flight.FlightDbId.ToString(),
-                DepartureAirportCode = flight.DepartureAirport.AirportCode,
-                DepartureAirportName = flight.DepartureAirport.AirportCity,
-                ArrivalAirportCode = flight.ArrivalAirport.AirportCode,
-                ArrivalAirportName = flight.ArrivalAirport.AirportCity,
-                DepartureDate = flight.FlightTime.ToString(),
-                Price = flight.Price
-            };
-    })
-    .WithName("GetFlight")
-    .WithOpenApi();
-
-app.MapGet("/departure_airports", () =>
-    {
-        using var scope = app.Services.CreateAsyncScope();
-        using var db = scope.ServiceProvider.GetService<StatDbContext>();
-
-        var dbFlights = from airports in db.Airports
-            where airports.IsDeparture == true
-            select airports;
-
-        var flightsResponse = new DepartureAirports
+        var response = new StatsHttp
         {
-            Airports = []
+            Directions = [Direction.GetExample()],
+            Accommodations = [Accommodation.GetExample()]
         };
-        foreach (var airport in dbFlights.Distinct())
-        {
-            flightsResponse.Airports.Add(new AirportHttp
-            {
-                AirportCode = airport.AirportCode,
-                AirportName = airport.AirportCity
-            });
-        }
 
-        flightsResponse.Airports = flightsResponse.Airports.Distinct().ToList();
-
-        return JsonConvert.SerializeObject(flightsResponse);
+        return JsonConvert.SerializeObject(response);
     })
-    .WithName("GetAirports")
+    .WithName("GetStats")
     .WithOpenApi();
 
 app.Run();

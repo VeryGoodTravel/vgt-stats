@@ -2,48 +2,88 @@ using Newtonsoft.Json;
 
 namespace vgt_stats.Models;
 
-public class AirportHttp
+public class TravelLocation
 {
-    [JsonProperty("airport_code")]
-    public string AirportCode { get; set; }
-    
-    [JsonProperty("airport_name")]
-    public string AirportName { get; set; }
+    [JsonProperty("id")]
+    public string Id { get; set; }
+
+    [JsonProperty("label")]
+    public string Label { get; set; }
+
+    [JsonProperty("locations", NullValueHandling = NullValueHandling.Ignore)]
+    public TravelLocation[] Locations { get; set; }
 }
-    
-public class DepartureAirports
+
+public class Direction
 {
-    [JsonProperty("airports")]
-    public List<AirportHttp> Airports { get; set; }
-}
+    [JsonProperty("origin")]
+    public TravelLocation Origin { get; set; }
     
-public class FlightHttp
+    [JsonProperty("destination")]
+    public TravelLocation Destination { get; set; }
+
+    public static Direction GetExample()
+    {
+        return new Direction
+        {
+            Origin = new TravelLocation
+            {
+                Id = "21",
+                Label = "Warsaw",
+            },
+            Destination = new TravelLocation
+            {
+                Id = "20",
+                Label = "New York",
+            }
+        };
+    }
+}
+
+public class Accommodation
 {
-    // only used when getting a single offer
-    [JsonProperty("available")]
-    public bool Available { get; set; }
+    [JsonProperty("destination")]
+    public TravelLocation Destination { get; set; }
     
-    [JsonProperty("flight_id")]
-    public string FlightId { get; set; }
+    [JsonProperty("name")]
+    public string Name { get; set; }
     
-    [JsonProperty("departure_airport_code")]
-    public string DepartureAirportCode { get; set; }
+    [JsonProperty("room")]
+    public string Room { get; set; }
     
-    [JsonProperty("departure_airport_name")]
-    public string DepartureAirportName { get; set; }
+    [JsonProperty("transportation")]
+    public string Transportation { get; set; }
     
-    [JsonProperty("arrival_airport_code")]
-    public string ArrivalAirportCode { get; set; }
+    [JsonProperty("maintenance")]
+    public string Maintenance { get; set; }
     
-    [JsonProperty("arrival_airport_name")]
-    public string ArrivalAirportName { get; set; }
-    
-    [JsonProperty("departure_date")]
-    public string DepartureDate { get; set; }
-    
-    [JsonProperty("price")]
-    public decimal Price { get; set; }
+    [JsonProperty("rating")]
+    public double Rating { get; set; }
+
+    public static Accommodation GetExample()
+    {
+        return new Accommodation
+        {
+            Destination = new TravelLocation
+            {
+                Id = "20",
+                Label = "New York",
+            },
+            Name = "Warwick New York",
+            Room = "Double",
+            Transportation = "Plane",
+            Maintenance = "All inclusive",
+            Rating = 4.5
+        };
+    }
 }
+
+public class StatsHttp
+{
+    [JsonProperty("directions")]
+    public Direction[] Directions { get; set; }
     
-public class FlightResponse : FlightHttp {}
+    [JsonProperty("accommodations")]
+    public Accommodation[] Accommodations { get; set; }
+}
     
