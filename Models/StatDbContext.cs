@@ -50,6 +50,8 @@ public class PopularHotel()
     
     public string Transportation { get; set; }
     
+    public string City { get; set; }
+    
     public int Count { get; set; }
 }
 

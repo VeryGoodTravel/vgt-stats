@@ -102,43 +102,6 @@ catch (ArgumentException)
     GracefulExit(app, logger, [hotelService]);
 }
 
-// app.MapPost("/flights", ([FromBody]FlightsRequestHttp request) =>
-//     {
-//         using var scope = app.Services.CreateAsyncScope();
-//         using var db = scope.ServiceProvider.GetService<StatDbContext>();
-//
-//         logger.Info("fligths request date {v}, departure {d} and arrival {a}" ,
-//             request.DepartureDateDt(), request.DepartureAirportCodes, request.ArrivalAirportCodes);
-//         
-//         var dbFlights = from flights in db.Flights
-//             where request.ArrivalAirportCodes.Contains(flights.ArrivalAirport.AirportCode)
-//                   && request.DepartureAirportCodes.Contains(flights.DepartureAirport.AirportCode)
-//                   && flights.FlightTime.Date == request.DepartureDateDt()
-//                   && (from m in db.Bookings
-//                       where m.Flight == flights
-//                       select m.Amount).Sum() + request.NumberOfPassengers < flights.Amount
-//             select flights;
-//
-//         var results = dbFlights.Include(p => p.DepartureAirport).Include(p => p.ArrivalAirport).ToList();
-//         logger.Info("fligths results count {c} and {v} " , results.Count,results);
-//
-//         return (from flight in results
-//             where flight != null
-//             select new FlightResponse
-//             {
-//                 Available = true,
-//                 FlightId = flight.FlightDbId.ToString(),
-//                 DepartureAirportCode = flight.DepartureAirport.AirportCode,
-//                 DepartureAirportName = flight.DepartureAirport.AirportCity,
-//                 ArrivalAirportCode = flight.ArrivalAirport.AirportCode,
-//                 ArrivalAirportName = flight.ArrivalAirport.AirportCity,
-//                 DepartureDate = flight.FlightTime.ToString(CultureInfo.InvariantCulture),
-//                 Price = flight.Price
-//             }).ToList();
-//     })
-//     .WithName("GetFlights")
-//     .WithOpenApi();
-
 app.MapGet("/PopularOffers", () =>
     {
         logger.Info("Received /PopularOffers request");
@@ -146,10 +109,25 @@ app.MapGet("/PopularOffers", () =>
         using var scope = app.Services.CreateAsyncScope();
         using var db = scope.ServiceProvider.GetService<StatDbContext>();
 
+        var directions = db.PopularDirections.OrderByDescending(d => d.Count).Take(12).ToArray().Select(d => new Direction
+        {
+            Origin = d.From,
+            Destination = d.To
+        }).ToArray();
+
+        var accommodations = db.PopularHotels.OrderByDescending(h => h.Count).Take(12).ToArray().Select(h => new Accommodation
+        {
+            Destination = h.City,
+            Maintenance = h.Maintenance,
+            Name = h.Name,
+            Room = h.Room,
+            Transportation = h.Transportation
+        }).ToArray();
+
         var response = new StatsHttp
         {
-            Directions = [Direction.GetExample()],
-            Accommodations = [Accommodation.GetExample()]
+            Directions = directions,
+            Accommodations = accommodations
         };
 
         return JsonConvert.SerializeObject(response);
@@ -163,8 +141,13 @@ app.MapGet("/OfferPopularity", ([FromBody]string offerid) =>
         
         using var scope = app.Services.CreateAsyncScope();
         using var db = scope.ServiceProvider.GetService<StatDbContext>();
+        
+        var parts = offerid.Split('$');
+        var hotel = parts[1].Replace("_", " ");
 
-        return 1.ToString();
+        var popularity = db.PopularHotels.Where(h => h.Name.Equals(hotel)).Sum(h => h.Count);
+
+        return popularity.ToString();
     })
     .WithName("IsOfferPopular")
     .WithOpenApi();

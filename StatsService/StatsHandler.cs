@@ -138,6 +138,7 @@ public class StatsHandler
                 Room = room,
                 Maintenance = maintenance,
                 Transportation = transportation,
+                City = to,
                 Count = 1
             });
         }
