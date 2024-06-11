@@ -1,3 +1,4 @@
+using System.Text;
 using System.Threading.Channels;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
@@ -26,7 +27,7 @@ public class StatsHandler
     public Channel<Message> Publish { get; }
     
     private Logger _logger;
-
+    private Utils _jsonUtils;
     private readonly StatDbContext _writeDb;
     private readonly StatDbContext _readDb;
     
@@ -59,177 +60,91 @@ public class StatsHandler
         Publish = publish;
         _writeDb = writeDb;
         _readDb = readDb;
+        _jsonUtils = new Utils(_logger);
 
         _logger.Debug("Starting tasks handling the messages");
-        RequestsTask = Task.Run(HandleFlights);
+        RequestsTask = Task.Run(HandleStats);
         _logger.Debug("Tasks handling the messages started");
     }
 
-    private async Task HandleFlights()
+    private async Task HandleStats()
     {
         while (await Requests.Reader.WaitToReadAsync(Token))
         {
             var message = await Requests.Reader.ReadAsync(Token);
-
-            _logger.Debug("Handling message {id} {type} {state}", message.MessageId, message.MessageType, message.State);
+            _logger.Debug("Received RMQ message");
+            var reply = (BackendReply)message.Body;
+            _logger.Debug("Cast to BackendReply");
+            var offerid = reply?.OfferId;
+            _logger.Debug("Unwrap OfferId {oid}", offerid);
             
-            // pilnuje ile wątków odpalę, to możesz całe już zmienić, to etap gdzie zajmuję sę otrzymaną wiadomością
             await _concurencySemaphore.WaitAsync(Token);
-
-            _ = message.State switch
-            {
-                SagaState.Begin => Task.Run(() => TempBookFlight(message), Token),
-                SagaState.PaymentAccept => Task.Run(() => BookFlight(message), Token),
-                SagaState.FlightTimedRollback => Task.Run(() => TempRollback(message), Token),
-                _ => null
-            };
-        }
-    }
-
-    private async Task TempBookFlight(Message message)
-    {
-        _logger.Debug("Temp Book | {m}", JsonConvert.SerializeObject(message));
-        if (message.MessageType != MessageType.FlightRequest || message.Body == null) return;
-        
-        var requestBody = (FlightRequest)message.Body;
-        
-        _logger.Debug("Temp Book {id} {type} {state}", requestBody.BookFrom, requestBody.BookTo, requestBody.CityFrom);
-        
-        await _dbWriteLock.WaitAsync(Token);
-        await using var transaction = await _writeDb.Database.BeginTransactionAsync(Token);
-
-        var flights = await _writeDb.Flights
-            .Include(p => p.ArrivalAirport)
-            .Include(p => p.DepartureAirport)
-            .FirstOrDefaultAsync(p => p.DepartureAirport.AirportCity.Equals(requestBody.CityFrom)
-                                      && p.ArrivalAirport.AirportCity.Equals(requestBody.CityTo)
-                                      && p.Amount - requestBody.PassangerCount >= 0
-                                      && p.FlightTime.Date == requestBody.BookFrom.Value.Date);
-        
-        _logger.Debug("After query");
-        
-        if (flights == null)
-        {
-            _logger.Debug("Rollback");
-            await transaction.RollbackAsync(Token);
-
-            _logger.Debug("Creating response");
-            message.MessageId += 1;
-            message.MessageType = MessageType.PaymentRequest;
-            message.State = SagaState.FlightTimedFail;
-            message.Body = new PaymentRequest();
             
-            _logger.Debug("Publishing");
-            await Publish.Writer.WriteAsync(message, Token);
-            _logger.Debug("Published");
-            _dbWriteLock.Release();
-            _concurencySemaphore.Release();
-            return;
+            Task.Run(() => SaveStats(offerid), Token);
         }
-        
-        _logger.Debug("Adding booking for flight {f}", flights.FlightDbId);
-        _writeDb.Bookings.Add(new Booking
-        {
-            Flight = flights,
-            TransactionId = message.TransactionId,
-            Temporary = 1,
-            TemporaryDt = DateTime.Now,
-            Amount = flights.Amount
-        });
-        flights.Amount-=requestBody.PassangerCount.Value;
-        await _readDb.SaveChangesAsync(Token);
-        await transaction.CommitAsync(Token);
-        _logger.Debug("Creating response");
-        message.MessageId += 1;
-        message.MessageType = MessageType.PaymentRequest;
-        message.State = SagaState.FlightTimedAccept;
-        message.Body = new PaymentRequest();
-        message.CreationDate = DateTime.Now;
-        _logger.Debug("Publishing");
-        await Publish.Writer.WriteAsync(message, Token);
-        _dbWriteLock.Release();
-        _concurencySemaphore.Release();
-
     }
-    
-    private async Task TempRollback(Message message)
+
+    private async Task SaveStats(string offerid)
     {
-        _logger.Debug("TempRollback");
+        _logger.Debug("SaveStats");
+        
+        var parts = offerid.Split('$');
+        var hotel = parts[1].Replace("_", " ");
+        var room = parts[3].Replace("_", " ");
+        var from = parts[4].Replace("_", " ");
+        var to = parts[14].Replace("_", " ");
+        var maintenance = parts[15].Replace("_", " ");
+        var transportation = parts[16].Replace("_", " ");
+        
+        _logger.Debug($"hotel = {hotel}, room = {room}, from = {from}, to = {to}, maintenance = {maintenance}, transportation = {transportation}",
+            hotel, room, from, to, maintenance, transportation);
         
         await _dbReadLock.WaitAsync(Token);
         await using var transaction = await _readDb.Database.BeginTransactionAsync(Token);
 
-        var booked = _readDb.Bookings
-            .Where(p => p.TransactionId == message.TransactionId);
-
-        if (booked.Any())
+        var popularDirection = _readDb.PopularDirections.Where(p => 
+            p.From.Equals(from)
+            && p.To.Equals(to));
+        
+        if (popularDirection.Any())
         {
-            _logger.Debug("removing booked");
-            booked.First().Flight.Amount+=booked.First().Amount;
-            await booked.ExecuteDeleteAsync(Token);
-            
+            popularDirection.First().Count += 1;
         }
-        await _readDb.SaveChangesAsync(Token);
-        await transaction.CommitAsync(Token);
-        
-        _logger.Debug("creating response");
-        message.MessageType = MessageType.OrderReply;
-        message.MessageId += 1;
-        message.State = SagaState.FlightTimedRollback;
-        message.Body = new FlightReply();
-        message.CreationDate = DateTime.Now;
-        
-        _logger.Debug("to publisher");
-        await Publish.Writer.WriteAsync(message, Token);
-        _dbReadLock.Release();
-        _concurencySemaphore.Release();
-    }
-    
-    private async Task BookFlight(Message message)
-    {
-        _logger.Debug("Book flight");
-        
-        await _dbReadLock.WaitAsync(Token);
-        await using var transaction = await _readDb.Database.BeginTransactionAsync(Token);
-
-        var booked = _readDb.Bookings
-            .Where(p => p.TransactionId == message.TransactionId);
-
-        if (booked.Any())
+        else
         {
-            _logger.Debug(" booked present");
-            var booking = booked.FirstOrDefault();
-            if (booking != null)
+            _readDb.PopularDirections.Add(new PopularDirection
             {
-                booking.Temporary = 0;
-                await _readDb.SaveChangesAsync(Token);
-                await transaction.CommitAsync(Token);
-                
-                _logger.Debug("rsponse creating");
-                message.MessageType = MessageType.OrderReply;
-                message.MessageId += 1;
-                message.State = SagaState.FlightFullAccept;
-                message.Body = new FlightReply();
-                message.CreationDate = DateTime.Now;
-        
-                _logger.Debug("to publish");
-                await Publish.Writer.WriteAsync(message, Token);
-                _dbReadLock.Release();
-                _concurencySemaphore.Release();
-            }
+                From = from,
+                To = to,
+                Count = 1
+            });
         }
-        _logger.Debug("rollback");
-        await transaction.RollbackAsync(Token);
+
+        var popularHotel = _readDb.PopularHotels.Where(p =>
+            p.Name.Equals(hotel) 
+            && p.Room.Equals(room) 
+            && p.Maintenance.Equals(maintenance) 
+            && p.Transportation.Equals(transportation));
+
+        if (popularHotel.Any())
+        {
+            popularHotel.First().Count += 1;
+        }
+        else
+        {
+            _readDb.PopularHotels.Add(new PopularHotel
+            {
+                Name = hotel,
+                Room = room,
+                Maintenance = maintenance,
+                Transportation = transportation,
+                Count = 1
+            });
+        }
         
-        _logger.Debug("rsponse creating");
-        message.MessageType = MessageType.OrderReply;
-        message.MessageId += 1;
-        message.State = SagaState.FlightFullFail;
-        message.Body = new FlightReply();
-        message.CreationDate = DateTime.Now;
+        await transaction.CommitAsync(Token);
+        await _readDb.SaveChangesAsync(Token);
         
-        _logger.Debug("to publish");
-        await Publish.Writer.WriteAsync(message, Token);
         _dbReadLock.Release();
         _concurencySemaphore.Release();
     }

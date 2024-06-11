@@ -8,18 +8,9 @@ public class StatDbContext : DbContext
 {
     private string _connectionString = "";
     
-    /// <summary>
-    /// Set of Database Airports entities mapped to AirportDb objects
-    /// </summary>
-    public DbSet<AirportDb> Airports { get; set; }
-    /// <summary>
-    /// Set of Database Flight entities mapped to FlightDb objects
-    /// </summary>
-    public DbSet<FlightDb> Flights { get; set; }
-    /// <summary>
-    /// Set of Database Booking entities mapped to Booking objects
-    /// </summary>
-    public DbSet<Booking> Bookings { get; set; }
+    public DbSet<PopularHotel> PopularHotels { get; set; }
+    
+    public DbSet<PopularDirection> PopularDirections { get; set; }
 
     /// <inheritdoc />
     public StatDbContext(DbContextOptions<StatDbContext> options)
@@ -49,85 +40,24 @@ public class StatDbContext : DbContext
     }
 }
 
-/// <summary>
-/// Booking object representing an object from the database
-/// </summary>
-public class Booking()
+public class PopularHotel()
 {
+    public string Name { get; set; }
     
-    public int BookingId { get; set; }
+    public string Room { get; set; }
     
-    /// <summary>
-    /// Flight booked
-    /// </summary>
-    public FlightDb Flight { get; set; } = new();
+    public string Maintenance { get; set; }
     
-    /// <summary>
-    /// Guid of the transaction that requested this booking
-    /// </summary>
-    public Guid TransactionId { get; set; }
+    public string Transportation { get; set; }
     
-    /// <summary>
-    /// If the booking is temporary
-    /// </summary>
-    public int Temporary { get; set; } = -1;
-    /// <summary>
-    /// Time of the temporary booking
-    /// </summary>
-    public DateTime TemporaryDt { get; set; }
-    
-    public int Amount { get; set; }
+    public int Count { get; set; }
 }
 
-/// <summary>
-/// Flight type object representing an object from the database
-/// </summary>
-public class FlightDb()
+public class PopularDirection()
 {
-    public int FlightDbId { get; set; }
+    public string From { get; set; }
     
-    
-    public int Price { get; set; }
-    
-    /// <summary>
-    /// Amount of the seats offered by the flight
-    /// </summary>
-    public int Amount { get; set; } = -1;
+    public string To { get; set; }
 
-    /// <summary>
-    /// Time the flight takes place
-    /// </summary>
-    public DateTime FlightTime { get; set; }
-    
-    /// <summary>
-    /// Arrival Airport the flight lands on
-    /// </summary>
-    public AirportDb ArrivalAirport { get; set; } = new();
-
-    /// <summary>
-    /// Departure Airport the flight starts from
-    /// </summary>
-    public AirportDb DepartureAirport { get; set; } = new();
-    
-};
-
-/// <summary>
-/// Flight object representing an object from the database
-/// </summary>
-public class AirportDb()
-{
-    public int AirportDbId { get; set; }
-    /// <summary>
-    /// Code of the airport from scrapper
-    /// </summary>
-    public string AirportCode { get; set; } = string.Empty;
-    /// <summary>
-    /// City the airport is in
-    /// </summary>
-    public string AirportCity { get; set; } = string.Empty;
-    /// <summary>
-    /// if the airport is a departure airport definition
-    /// </summary>
-    public bool IsDeparture { get; set; }
-    
-};
+    public int Count { get; set; } = 0;
+}

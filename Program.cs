@@ -139,9 +139,10 @@ catch (ArgumentException)
 //     .WithName("GetFlights")
 //     .WithOpenApi();
 
-app.MapGet("/stats", () =>
+app.MapGet("/PopularOffers", () =>
     {
-        logger.Info("Received /stats request");
+        logger.Info("Received /PopularOffers request");
+        
         using var scope = app.Services.CreateAsyncScope();
         using var db = scope.ServiceProvider.GetService<StatDbContext>();
 
@@ -153,7 +154,19 @@ app.MapGet("/stats", () =>
 
         return JsonConvert.SerializeObject(response);
     })
-    .WithName("GetStats")
+    .WithName("GetPopularOffers")
+    .WithOpenApi();
+
+app.MapGet("/OfferPopularity", ([FromBody]string offerid) =>
+    {
+        logger.Info("Received /OfferPopularity request: {oid}", offerid);
+        
+        using var scope = app.Services.CreateAsyncScope();
+        using var db = scope.ServiceProvider.GetService<StatDbContext>();
+
+        return 1.ToString();
+    })
+    .WithName("IsOfferPopular")
     .WithOpenApi();
 
 app.Run();
