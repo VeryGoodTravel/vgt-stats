@@ -137,7 +137,7 @@ app.MapGet("/PopularOffers", () =>
 
 app.MapGet("/OfferPopularity", ([FromBody]StatsRequestHttp request) =>
     {
-        logger.Info("Received /OfferPopularity request: {oid}", request);
+        logger.Info("Received /OfferPopularity request: {oid}", request.OfferId);
         
         using var scope = app.Services.CreateAsyncScope();
         using var db = scope.ServiceProvider.GetService<StatDbContext>();
