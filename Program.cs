@@ -111,17 +111,17 @@ app.MapGet("/PopularOffers", () =>
 
         var directions = db.PopularDirections.OrderByDescending(d => d.Count).Take(12).ToArray().Select(d => new Direction
         {
-            Origin = d.From,
-            Destination = d.To
+            Origin = d.From.Replace(" ", "_"),
+            Destination = d.To.Replace(" ", "_")
         }).ToArray();
 
         var accommodations = db.PopularHotels.OrderByDescending(h => h.Count).Take(12).ToArray().Select(h => new Accommodation
         {
-            Destination = h.City,
-            Maintenance = h.Maintenance,
-            Name = h.Name,
-            Room = h.Room,
-            Transportation = h.Transportation
+            Destination = h.City.Replace(" ", "_"),
+            Maintenance = h.Maintenance.Replace(" ", "_"),
+            Name = h.Name.Replace(" ", "_"),
+            Room = h.Room.Replace(" ", "_"),
+            Transportation = h.Transportation.Replace(" ", "_")
         }).ToArray();
 
         var response = new StatsHttp
@@ -146,6 +146,7 @@ app.MapGet("/OfferPopularity", ([FromBody]string offerid) =>
         var hotel = parts[1].Replace("_", " ");
 
         var popularity = db.PopularHotels.Where(h => h.Name.Equals(hotel)).Sum(h => h.Count);
+        logger.Info("Calculated offer popularity: |{p}|", popularity);
 
         return popularity.ToString();
     })
