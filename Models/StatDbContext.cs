@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -42,6 +43,8 @@ public class StatDbContext : DbContext
 
 public class PopularHotel()
 {
+    [Key]
+    public int Id { get; set; }
     public string Name { get; set; }
     
     public string Room { get; set; }
@@ -57,6 +60,8 @@ public class PopularHotel()
 
 public class PopularDirection()
 {
+    [Key]
+    public int Id { get; set; }
     public string From { get; set; }
     
     public string To { get; set; }
