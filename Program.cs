@@ -135,7 +135,7 @@ app.MapGet("/PopularOffers", () =>
     .WithName("GetPopularOffers")
     .WithOpenApi();
 
-app.MapGet("/OfferPopularity", ([FromBody]StatsRequestHttp request) =>
+app.MapPost("/OfferPopularity", ([FromBody]StatsRequestHttp request) =>
     {
         logger.Info("Received /OfferPopularity request: {oid}", request.OfferId);
         
