@@ -135,14 +135,14 @@ app.MapGet("/PopularOffers", () =>
     .WithName("GetPopularOffers")
     .WithOpenApi();
 
-app.MapPost("/OfferPopularity", ([FromBody]StatsRequestHttp request) =>
+app.MapPost("/OfferPopularity", ([FromBody]string offer_id) =>
     {
-        logger.Info("Received /OfferPopularity request: {oid}", request.OfferId);
+        logger.Info("Received /OfferPopularity request: {oid}", offer_id);
         
         using var scope = app.Services.CreateAsyncScope();
         using var db = scope.ServiceProvider.GetService<StatDbContext>();
         
-        var parts = request.OfferId.Split('$');
+        var parts = offer_id.Split('$');
         var hotel = parts[1].Replace("_", " ");
 
         var popularity = db.PopularHotels.Where(h => h.Name.Equals(hotel)).Sum(h => h.Count);
