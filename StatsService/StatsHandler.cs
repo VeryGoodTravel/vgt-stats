@@ -72,7 +72,7 @@ public class StatsHandler
         while (await Requests.Reader.WaitToReadAsync(Token))
         {
             var message = await Requests.Reader.ReadAsync(Token);
-            _logger.Debug("Received RMQ message");
+            _logger.Debug("Received RMQ message: {mes}", message.ToString());
             var reply = (BackendReply)message.Body;
             _logger.Debug("Cast to BackendReply");
             var offerid = reply?.OfferId;
