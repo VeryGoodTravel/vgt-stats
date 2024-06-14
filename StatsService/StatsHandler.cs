@@ -19,7 +19,7 @@ public class StatsHandler
     /// <summary>
     /// Requests from the orchestrator
     /// </summary>
-    public Channel<Message> Requests { get; }
+    public Channel<SagaReply> Requests { get; }
     
     /// <summary>
     /// Messages that need to be sent out to the queues
@@ -53,7 +53,7 @@ public class StatsHandler
     /// <param name="requests"> Queue with the requests from the orchestrator </param>
     /// <param name="publish"> Queue with messages that need to be published to RabbitMQ </param>
     /// <param name="log"> logger to log to </param>
-    public StatsHandler(Channel<Message> requests, Channel<Message> publish, StatDbContext writeDb, StatDbContext readDb, Logger log)
+    public StatsHandler(Channel<SagaReply> requests, Channel<Message> publish, StatDbContext writeDb, StatDbContext readDb, Logger log)
     {
         _logger = log;
         Requests = requests;
@@ -71,11 +71,10 @@ public class StatsHandler
     {
         while (await Requests.Reader.WaitToReadAsync(Token))
         {
-            var message = await Requests.Reader.ReadAsync(Token);
-            _logger.Debug("Received RMQ message: {mes}", message.ToString());
-            var reply = (BackendReply)message.Body;
+            var reply = await Requests.Reader.ReadAsync(Token);
+            _logger.Debug("Received RMQ message: {mes}", reply);
             _logger.Debug("Cast to BackendReply");
-            var offerid = reply?.OfferId;
+            var offerid = reply.OfferId;
             _logger.Debug("Unwrap OfferId {oid}", offerid);
             
             await _concurencySemaphore.WaitAsync(Token);

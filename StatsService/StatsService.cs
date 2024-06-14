@@ -1,6 +1,9 @@
+using System.Text;
 using System.Threading.Channels;
 using Microsoft.EntityFrameworkCore;
 using NEventStore;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using NLog;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
@@ -22,7 +25,7 @@ public class StatsService : IDisposable
     private readonly Utils _jsonUtils;
     private readonly IStoreEvents _eventStore;
     
-    private readonly Channel<Message> _payments;
+    private readonly Channel<SagaReply> _payments;
     private readonly Channel<Message> _publish;
     private readonly StatsHandler _statsHandler;
 
@@ -53,7 +56,7 @@ public class StatsService : IDisposable
         _config = config;
 
         _jsonUtils = new Utils(_logger);
-        _payments = Channel.CreateUnbounded<Message>(new UnboundedChannelOptions()
+        _payments = Channel.CreateUnbounded<SagaReply>(new UnboundedChannelOptions()
             { SingleReader = true, SingleWriter = true, AllowSynchronousContinuations = true });
         _logger.Info("-------------------------------------------------------------------------------- Creating service connection ----------------------------------------------------------");
 
@@ -112,17 +115,14 @@ public class StatsService : IDisposable
         _logger.Debug("Received response | Tag: {tag}", ea.DeliveryTag);
         var body = ea.Body.ToArray();
 
-        var reply = _jsonUtils.Deserialize(body);
-
-        if (reply == null) return;
-
-        var message = reply.Value;
-
-        // send message reply to the appropriate task
-        var result = _payments.Writer.TryWrite(message);
+        var mssg = Encoding.UTF8.GetString(body);
+        _logger.Info("recieved {mssg)", mssg);
         
-        if (result) _logger.Debug("Replied routed successfuly to {type} handler", message.MessageType.ToString());
-        else _logger.Warn("Something went wrong in routing to {type} handler", message.MessageType.ToString());
+        var reply = JsonConvert.DeserializeObject<SagaReply>(mssg);
+        _logger.Info("Deserialised: {filters} | {t} | {c}", reply.TransactionId, 
+            reply.Answer.ToString(), reply.OfferId);
+        // send message reply to the appropriate task
+        var result = _payments.Writer.TryWrite(reply);
 
         _queues.PublishTagResponse(ea, result);
     }
@@ -133,4 +133,35 @@ public class StatsService : IDisposable
         _logger.Debug("Disposing");
         _queues.Dispose();
     }
+}
+
+public enum SagaAnswer
+{
+    Success,
+    HotelFailure,
+    FlightFailure,
+    PaymentFailure,
+    HotelAndFlightFailure
+}
+
+/// <summary>
+/// reply from the OrderService to all the backends
+/// notifies the backends of the finished saga transaction
+/// It is sent to all instances of the backend
+/// </summary>
+public record struct SagaReply()
+{
+    /// <summary>
+    /// Guid of the SAGA transaction
+    /// </summary>
+    public Guid TransactionId { get; set; }
+    
+    /// <summary>
+    /// ID of the offer as specified by the backend
+    /// </summary>
+    public string OfferId { get; set; }
+    
+    [JsonConverter(typeof(StringEnumConverter))]
+    public SagaAnswer Answer { get; set; }
+    
 }
